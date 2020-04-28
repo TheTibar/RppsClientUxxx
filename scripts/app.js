@@ -3926,7 +3926,7 @@ function createSalesPro(agency_token, new_sales_pro) { //OK Uxxx, reste la parti
 
 }
 
-function getAgencySalesProAfter(agency_token) { //OK Uxxx, on revient peut-être un niveau trop haut (sélection de la région plutôt que récap
+function getAgencySalesProAfter(agency_token) { //OK Uxxx, on revient peut-être un niveau trop haut (sélection de la région plutôt que récap, mais permet d'assuer un état stable
 	
 	agency_token_uri = encodeURIComponent(agency_token);
 	user_token_uri = encodeURIComponent(user_token);
@@ -4070,6 +4070,44 @@ function getAgencySalesProAfter(agency_token) { //OK Uxxx, on revient peut-être
 //FIN Création
 
 //DEBUT Associer commercial / Médecin
+/*
+Explications : 
+On peut mettre à jour les liens Docteur / Utilisateur indépendament pour chaque région
+On peut donc afficher, pour chaque région de l'utilisateur connecté, la liste des médecins ainsi que leur commercial
+de référence actuel.
+
+createDoctorSalesProLinkPage : 
+	crée la liste des div
+currentUserAgencySelectDSPL : 
+	affiche la liste des agences de l'utilisateur
+getAgencyDoctors : 
+	récupère la liste des régions, médecins, des commerciaux et des spécialités d'une agence, 
+	filtré sur les régions accessibles à l'utilisateur connecté
+createDoctorsFilter : 
+	crée les filtres par région sur Commercial et Spécialité
+filterDoctors : 
+	récupère les données des listes créées précedemment et applique les filtres sur les données
+editDoctorSalesProLink : 
+	basé sur le tableau "modif_doctor_sales_pro_link"
+		si le docteur est déjà présent dans ce tableau, on ne fait rien (il est affiché dans la partie suivante)
+		si le docteur n'est pas présent dans ce tableau, on l'ajoute 
+resultModifDiv : 
+	si on a des données dans "modif_doctor_sales_pro_link" pour la région en cours, on recrée la liste des médecins 
+	qui doivent être modifiés avec la valeur du commercial actuel ou celle du nouveau si elle a été postionnée
+selectElement : 
+	permet de mettre la bonne valeur dans la liste de sélection des commerciaux (soit la nouvelle, soit l'ancienne si pas modifiée)
+temporaryChangeDoctorSalesProLink : 
+	à chaque changement de la sélection dans la liste des commerciaux, on met à jour "modif_doctor_sales_pro_link"
+	pour la région concernée, avec le token du nouveau commercial choisi
+cancelTemporaryChangeDoctorSalesProLink : 
+	supprime, pour la région en cours, le lien "médecin / utilisateur" qui est présent dans "modif_doctor_sales_pro_link"
+validateModifDiv : 
+	basé sur resultModifDiv, si on a au moins un élément pour la région en cours, on crée un div qui permet
+	d'enregistrer les données en base
+saveNewDoctorsSalesProLink : 
+	enregistre les modifications en base et met à jour le tableau d'entrée
+*/
+
 function createDoctorSalesProLinkPage() {
 	if (alreadyConnected()) 
 	{ //à mettre au début de chaque fonction Page
@@ -4084,15 +4122,6 @@ function createDoctorSalesProLinkPage() {
 			+ '<div class = "action" id="action_creer_comm_recap"></div>'
 			+ '<div class = "action" id="action_creer_comm_result"></div>'
 			+ '<div class = "action" id="action_creer_comm_after"></div>'
-			/*
-			+ '<div class = "action" id="action_comptage_arrivee_medecins"></div>'
-			+ '<div class = "action" id="action_arrivee_medecins"></div>'
-			+ '<div class = "action" id="action_bilan_arrivee_medecins"></div>'
-			+ '<div class = "action" id="action_verif_coherence_apres"></div>'
-			+ '<div class = "action" id="action_bilan_mises_a_jour"></div>'
-			+ '<div class = "action" id="action_coherence_finale"></div>'
-			+ '<div class = "action" id="action_import_termine"></div>'
-			*/
 			;
 		document.getElementById("content").innerHTML = htmlRender;
 		currentUserAgencySelectDSPL();
@@ -4104,15 +4133,14 @@ function createDoctorSalesProLinkPage() {
 	
 	//Il faut récupérer : 
 	/* 
-	 1 - l'agence sélectionnée de l'utilisateur connecté (1 seule) : appel de currentUserAgencySelect si il y a plusieurs agences dans son profil
+	 1 - l'agence sélectionnée de l'utilisateur connecté (1 seule) : appel de currentUserAgencySelectDSPL si il y a plusieurs agences dans son profil
 	 2 - les rôles possibles (dans la table rpps_mstr_role_can_create)
 	 3 - les régions possibles (dans la table rpps_mstr_agency_region)
-
 	*/
 
 }
 
-function currentUserAgencySelectDSPL() {
+function currentUserAgencySelectDSPL() { //OK Uxxx
 	
 	htmlRender = '';
 	htmlRender = htmlRender 
@@ -4145,7 +4173,7 @@ function currentUserAgencySelectDSPL() {
 	$("#agency_list_result").html(htmlResult).fadeIn();
 }
 
-function getAgencyDoctors(agency_token) {
+function getAgencyDoctors(agency_token) { //OK Uxxx ; no_user_region_agency à gérer
 	 //par région et par spécialité, trié par ordre alphabétique
 	agency_token_uri = encodeURIComponent(agency_token);
 	user_token_uri = encodeURIComponent(user_token);
@@ -4196,7 +4224,7 @@ function getAgencyDoctors(agency_token) {
 					getAgencyDoctors(agency_token);
 				})
 				break;
-			case "no_region_agency":
+			case "no_user_region_agency":
 				htmlResult = ''
 					+ '<table class="rwd-table">'
 						+ '<tr>'
@@ -4283,8 +4311,11 @@ function getAgencyDoctors(agency_token) {
     xhr.send();  
 }
 
-function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre et le mettre à jour
+function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre et le mettre à jour ; KO pour le moment
 	
+	
+	console.log("doctor_listing_result_" + region_id);
+	document.getElementById("doctor_listing_result_" + region_id).innerHTML = "";
 	
 	console.log("doctor_listing_modif_" + region_id);
 	document.getElementById("doctor_listing_modif_" + region_id).innerHTML = "";
@@ -4298,7 +4329,11 @@ function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre e
 	
 	region_id_uri = encodeURIComponent(region_id);
 	
+	console.log(modif_doctor_sales_pro_link);
+	
 	modif_doctor_sales_pro_link[region_id] = []; 
+	
+	console.log(modif_doctor_sales_pro_link);
 	
 	var url = host + "WebServices/Region/WS_Get_Doctors_By_Region.php?region_id=" + region_id_uri;
     console.log(url);
@@ -4312,7 +4347,7 @@ function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre e
 			console.log(response);
 			switch(response.status_message) {
 			default: //erreur
-				window.alert('mise à jour ok ; erreur récupération : ' + response.status_message)
+				window.alert('mise à jour ok ; erreur récupération : ' + response.status_message) //si on est là, la mise à jour a été effectuée
 				break;
 			case "region_doctors":
 				
@@ -4324,22 +4359,12 @@ function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre e
 				console.log(doc);
 				
 				filterDoctors(region_id, doc);
-					//On réinitialise le tableau de la région qui a été enregistré
-					//modif_doctor_sales_pro_link[region_id] = [];
-					//console.log(modif_doctor_sales_pro_link[region_id]);
-					//On met à jour le div du listing des docteurs
-					//console.log('filter');
-					//filterDoctors(region_id, doc);
-					
-					//toggleDiv("doctor_data_change_result");
-					//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
-					//createSalesProFormInput(agency_token); // on propose de créer un commercial
 				break;
 			}
         }
     };
     xhr.ontimeout = function () {
-    	console.log(timeout);
+    	console.log("timeout");
     	htmlResult = ''
 			+ '<table class="rwd-table">'
 				+ '<tr>'
@@ -4352,12 +4377,12 @@ function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre e
 				+ '</tr>'
 				+ '<tr>'
 					+ '<td data-th="Information"></td>'
-					+ '<td data-th="Action">Relancer&nbsp;<img id = "saveNewDoctorsSalesProLink_' + region_id + '" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+					+ '<td data-th="Action">Relancer&nbsp;<img id = "getAgencyDoctorsRegionId_' + region_id + '" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
 				+ '</tr>'
 			+ '</table>';
-		$("#doctor_listing_update_result_" + region_id).html(htmlResult).fadeIn();
-		$("#saveNewDoctorsSalesProLink").click(function() {
-			saveNewDoctorsSalesProLink(region_id);
+		$("#doctor_listing_result_" + region_id).html(htmlResult).fadeIn();
+		$("#getAgencyDoctorsRegionId_" + region_id).click(function() {
+			getAgencyDoctorsRegionId(region_id, doc);
 			//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
 		})
     };
@@ -4367,7 +4392,7 @@ function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre e
     
 }
 
-function createDoctorsFilter(doc) {
+function createDoctorsFilter(doc) { //OK Uxxx
 
 	//console.log('createDoctorsFilterListingResultDiv');
 	//console.log(doc);
@@ -4408,11 +4433,11 @@ function createDoctorsFilter(doc) {
 		for (var k = 0; k < region_sales_pro.length; k++) {
 			htmlSelectSalesPro = htmlSelectSalesPro
 				+ '<option value = "'
-				+ region_sales_pro[k].sales_pro_token
+				+ region_sales_pro[k].token
 				+ '">'
 				+ capitalizeWords(region_sales_pro[k].first_name)
 				+ ' '
-				+ capitalizeWords(region_sales_pro[k].name)
+				+ capitalizeWords(region_sales_pro[k].last_name)
 				+ '</option>'
 		}
 		
@@ -4446,7 +4471,7 @@ function createDoctorsFilter(doc) {
 	}
 }
 
-function filterDoctors(region_id, doc) {
+function filterDoctors(region_id, doc) { //OK Uxxx
 	//console.log('filterDoctors');
 	//console.log(modif_doctor_sales_pro_link[region_id]);
 	//console.log(region_id);
@@ -4469,8 +4494,8 @@ function filterDoctors(region_id, doc) {
 	
 	//console.log('filter_speciality');	
 	//console.log(filter_speciality);
-	//console.log('filter_sales_pro');
-	//console.log(filter_sales_pro);
+	console.log('filter_sales_pro');
+	console.log(filter_sales_pro);
 	
 	if (filter_speciality != -1) {
 		//on a un filtre sur la spécialité
@@ -4483,7 +4508,7 @@ function filterDoctors(region_id, doc) {
 	
 	if (filter_sales_pro != -1) {
 		//on a un filtre sur la spécialité
-		doc_region_array = doc_region_array.filter(x => x.sales_pro_token == filter_sales_pro);
+		doc_region_array = doc_region_array.filter(x => x.token == filter_sales_pro);
 	}
 	
 	//console.log('après filtre sp');
@@ -4505,7 +4530,7 @@ function filterDoctors(region_id, doc) {
 	for (var i = 0; i < doc_region_array.length; i++) {
 		
 	
-		label_sales_pro_array = region_sales_pro.filter(x => x.sales_pro_token == doc_region_array[i].sales_pro_token)[0];
+		label_sales_pro_array = region_sales_pro.filter(x => x.token == doc_region_array[i].token)[0];
 		//console.log(label_sales_pro_array);
 				
 		htmlListing = htmlListing 
@@ -4515,8 +4540,8 @@ function filterDoctors(region_id, doc) {
 					+ '<td data-th="Nom">' + doc_region_array[i].doc_name + '</td>'
 					+ '<td data-th="Prénom">' + doc_region_array[i].doc_first_name + '</td>'
 					+ '<td data-th="Spécialité">' + doc_region_array[i].doc_speciality + '</td>'
-					+ '<td data-th="Commercial">' + label_sales_pro_array.first_name + ' ' + label_sales_pro_array.name + '</td>'
-					+ '<td data-th="Modifier">&nbsp<img id = "filterDoctors" title="Modifier" class = "img_in_table" style="cursor: pointer;" onclick = "editDoctorSalesProLink(' + region_id + ',' + '\'' + doc_region_array[i].doc_identifiant + '\'' + ', ' + '\'' + doc_region_array[i].sales_pro_token + '\'' + ', doc);" src="img/edit.png"/></td>'
+					+ '<td data-th="Commercial">' + label_sales_pro_array.first_name + ' ' + label_sales_pro_array.last_name + '</td>'
+					+ '<td data-th="Modifier">&nbsp<img id = "filterDoctors" title="Modifier" class = "img_in_table" style="cursor: pointer;" onclick = "editDoctorSalesProLink(' + region_id + ',' + '\'' + doc_region_array[i].doc_identifiant + '\'' + ', ' + '\'' + doc_region_array[i].token + '\'' + ', doc);" src="img/edit.png"/></td>'
 				+ '</tr>';
 
 	}
@@ -4527,10 +4552,10 @@ function filterDoctors(region_id, doc) {
 	
 }
 
-function editDoctorSalesProLink(region_id, doc_identifiant, sales_pro_token_orig, doc) {
+function editDoctorSalesProLink(region_id, doc_identifiant, sales_pro_token_orig, doc) { // OK Uxxx
 	
 	already_modified_doctor = modif_doctor_sales_pro_link[region_id].find(x => x.doc_identifiant == doc_identifiant);
-	//console.log(already_modified_doctor);
+	console.log(already_modified_doctor);
 	
 	region_code_array = doc.region_array.filter(x => x.region_id == region_id)[0];
 	region_code = region_code_array.code;
@@ -4538,10 +4563,10 @@ function editDoctorSalesProLink(region_id, doc_identifiant, sales_pro_token_orig
 	region_sales_pro = doc.region_sales_pro[region_code].sales_pro;
 	
 	if (already_modified_doctor === undefined) {
-		//console.log('premiere modif on crée')
+		console.log('premiere modif on crée') //il s'agit de la première modification du médecin dans cette session, la ligne n'existe pas dans le tableau
 
 		doc_data = doc.region_doctors_array[region_code].doctors.filter(x => x.doc_identifiant == doc_identifiant)[0];
-		sales_pro_data = doc.region_sales_pro[region_code].sales_pro.filter(x => x.sales_pro_token == sales_pro_token_orig)[0];
+		sales_pro_data = doc.region_sales_pro[region_code].sales_pro.filter(x => x.token == sales_pro_token_orig)[0];
 		//sales_pro_data = region_sales_pro.filter(x => x.sales_pro_token == sales_pro_token_orig)[0];
 		//console.log('region_sales_pro');
 		//console.log(region_sales_pro);
@@ -4555,7 +4580,7 @@ function editDoctorSalesProLink(region_id, doc_identifiant, sales_pro_token_orig
 		lineToPush.doc_speciality = doc_data.doc_speciality;
 		
 		lineToPush.sales_pro_token_orig = sales_pro_token_orig;
-		lineToPush.sales_pro_name_orig = sales_pro_data.name;
+		lineToPush.sales_pro_name_orig = sales_pro_data.last_name;
 		lineToPush.sales_pro_first_name_orig = sales_pro_data.first_name;
 
 		
@@ -4569,10 +4594,10 @@ function editDoctorSalesProLink(region_id, doc_identifiant, sales_pro_token_orig
 		
 		//console.log(modif_doctor_sales_pro_link[region_id]);
 
-	}
+	} //manque un ELSE ?
 }	
 
-function resultModifDiv(region_id, doc) {
+function resultModifDiv(region_id, doc) { //OK Uxxx
 
 	//console.log('dans resultModifDiv');
 	region_code_array = doc.region_array.filter(x => x.region_id == region_id)[0];
@@ -4580,7 +4605,7 @@ function resultModifDiv(region_id, doc) {
 	
 	region_sales_pro = doc.region_sales_pro[region_code].sales_pro;
 	
-	if (modif_doctor_sales_pro_link[region_id].length > 0) {
+	if (modif_doctor_sales_pro_link[region_id].length > 0) { //on crée les div de récapitulatif des modifications et d'enregistrement
 
 		htmlModif = ''
 			+ '<table class="rwd-table">'
@@ -4595,16 +4620,16 @@ function resultModifDiv(region_id, doc) {
 		
 		for (var i = 0; i < modif_doctor_sales_pro_link[region_id].length; i++) {
 			
-			htmlSelectSalesPro = '<select id = "select_sales_pro_modif_' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant + '" onchange = "temporaryChangeDoctorSalesProLink(' + '\'' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant + '\'' + ', ' + region_id + ', doc);">';
+			htmlSelectSalesPro = '<select id = "select_sales_pro_modif_' + region_id + '_' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant + '" onchange = "temporaryChangeDoctorSalesProLink(' + '\'' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant + '\'' + ', ' + region_id + ', doc);">';
 			
 			for (var k = 0; k < region_sales_pro.length; k++) {
 				htmlSelectSalesPro = htmlSelectSalesPro
 					+ '<option value = "'
-					+ region_sales_pro[k].sales_pro_token
+					+ region_sales_pro[k].token
 					+ '">'
 					+ capitalizeWords(region_sales_pro[k].first_name)
 					+ ' '
-					+ capitalizeWords(region_sales_pro[k].name)
+					+ capitalizeWords(region_sales_pro[k].last_name)
 					+ '</option>'
 			}
 			
@@ -4624,7 +4649,7 @@ function resultModifDiv(region_id, doc) {
 						+ '<td data-th="Spécialité">' + modif_doctor_sales_pro_link[region_id][i].doc_speciality + '</td>'
 						+ '<td data-th="Ancien commercial">' + label_sales_pro + '</td>'
 						+ '<td data-th="Nouveau commercial">' + htmlSelectSalesPro + '</td>'
-						+ '<td data-th="Modifier">&nbsp<img id = "editDoctorSalesProLink" title="Modifier" class = "img_in_table" style="cursor: pointer;" onclick = "cancelTemporaryChangeDoctorSalesProLink(' + '\'' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant + '\'' + ', ' + region_id + ', doc);" src="img/ko.png"/></td>'
+						+ '<td data-th="Annuler">&nbsp<img id = "editDoctorSalesProLink" title="Annuler" class = "img_in_table" style="cursor: pointer;" onclick = "cancelTemporaryChangeDoctorSalesProLink(' + '\'' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant + '\'' + ', ' + region_id + ', doc);" src="img/ko.png"/></td>'
 					+ '</tr>';
 		}
 		
@@ -4636,34 +4661,36 @@ function resultModifDiv(region_id, doc) {
 		//document.getElementById("doctor_listing_modif_" + region_id).scrollIntoView();
 		
 		for (var i = 0; i < modif_doctor_sales_pro_link[region_id].length; i++) {
-			//permet de mettre soit le commercial d'origine soit le nouveau commercial choisi
+			//permet de mettre soit le commercial d'origine soit le nouveau commercial choisi dans la nouvelle liste de choix
 			//console.log('token new : ');
 			//console.log(modif_doctor_sales_pro_link[region_id][i].sales_pro_token_new);
-			selectElement('select_sales_pro_modif_' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant, modif_doctor_sales_pro_link[region_id][i].sales_pro_token_new == '' ? modif_doctor_sales_pro_link[region_id][i].sales_pro_token_orig : modif_doctor_sales_pro_link[region_id][i].sales_pro_token_new);
+			selectElement('select_sales_pro_modif_' + region_id + '_' + modif_doctor_sales_pro_link[region_id][i].doc_identifiant, modif_doctor_sales_pro_link[region_id][i].sales_pro_token_new == '' ? modif_doctor_sales_pro_link[region_id][i].sales_pro_token_orig : modif_doctor_sales_pro_link[region_id][i].sales_pro_token_new);
 		}
 		
 		validateModifDiv(region_id, doc);
 		
 	}
-	else {
+	else { //On supprime les div de récapitulatif des modifications et d'enregistrement
 		htmlModif = '' 
-			+ '<div class = "doctor_listing_modif" id = "doctor_listing_modif_' + region_id + '">MODIFS'
+			+ '<div class = "doctor_listing_modif" id = "doctor_listing_modif_' + region_id + '">'
 			+ '</div>';
 		document.getElementById("doctor_listing_modif_" + region_id).innerHTML = htmlModif;	
 		
 		htmlValidate = ''
-			+ '<div class = "doctor_listing_validate_update" id = "doctor_listing_validate_update_' + doc.region_array[i].region_id + '">ENREGISTREMENT'
+			//+ '<div class = "doctor_listing_validate_update" id = "doctor_listing_validate_update_' + doc.region_array[i].region_id + '">ENREGISTREMENT'
+			+ '<div class = "doctor_listing_validate_update" id = "doctor_listing_validate_update_' + region_id + '">'
 			+ '</div>';
 		document.getElementById("doctor_listing_validate_update_" + region_id).innerHTML = htmlValidate;	
 	}
 }
 
-function selectElement(id, valueToSelect) {    
+function selectElement(id, valueToSelect) { //OK Uxxx
+	console.log('dans select element');
     let element = document.getElementById(id);
     element.value = valueToSelect;
 }
 
-function temporaryChangeDoctorSalesProLink(doc_identifiant, region_id, doc) {
+function temporaryChangeDoctorSalesProLink(doc_identifiant, region_id, doc) { //OK Uxxx
 	
 	region_code_array = doc.region_array.filter(x => x.region_id == region_id)[0];
 	region_code = region_code_array.code;
@@ -4671,19 +4698,21 @@ function temporaryChangeDoctorSalesProLink(doc_identifiant, region_id, doc) {
 
 	//console.log(region_sales_pro);
 	
-	var select_new_sales_pro = document.getElementById("select_sales_pro_modif_" + doc_identifiant);
+	var select_new_sales_pro = document.getElementById("select_sales_pro_modif_" + region_id + '_' + doc_identifiant);
 	var filter_new_sales_pro = select_new_sales_pro.options[select_new_sales_pro.selectedIndex].value;
 	
-	sales_pro_data_new = doc.region_sales_pro[region_code].sales_pro.filter(x => x.sales_pro_token == filter_new_sales_pro)[0];
+	sales_pro_data_new = doc.region_sales_pro[region_code].sales_pro.filter(x => x.token == filter_new_sales_pro)[0];
 	
 	//console.log('modif');
 	modif_doctor_sales_pro_link[region_id].filter(x => x.doc_identifiant == doc_identifiant)[0].sales_pro_token_new = filter_new_sales_pro;
-	modif_doctor_sales_pro_link[region_id].filter(x => x.doc_identifiant == doc_identifiant)[0].sales_pro_name_new = sales_pro_data_new.name;
+	modif_doctor_sales_pro_link[region_id].filter(x => x.doc_identifiant == doc_identifiant)[0].sales_pro_name_new = sales_pro_data_new.last_name;
 	modif_doctor_sales_pro_link[region_id].filter(x => x.doc_identifiant == doc_identifiant)[0].sales_pro_first_name_new = sales_pro_data_new.first_name;
+	
+	//console.log(modif_doctor_sales_pro_link);
 
 }	
 
-function cancelTemporaryChangeDoctorSalesProLink(doc_identifiant, region_id, doc) {
+function cancelTemporaryChangeDoctorSalesProLink(doc_identifiant, region_id, doc) { //OK Uxxx
 	
 	console.log(doc_identifiant + ' ; ' + region_id);
 	console.log('avant remove');
@@ -4691,12 +4720,11 @@ function cancelTemporaryChangeDoctorSalesProLink(doc_identifiant, region_id, doc
 	modif_doctor_sales_pro_link[region_id] = modif_doctor_sales_pro_link[region_id].filter(x => x.doc_identifiant != doc_identifiant);
 	console.log('après remove');
 	console.log(modif_doctor_sales_pro_link[region_id]);
-	
 	//on rafraichit le div modif
 	resultModifDiv(region_id, doc);
 }	
 	
-function validateModifDiv(region_id, doc) {
+function validateModifDiv(region_id, doc) { //OK Uxxx
 	console.log('length : ' + modif_doctor_sales_pro_link[region_id].length);
 	htmlValidate = ''
 			+ '<table class="rwd-table">'
@@ -4716,20 +4744,33 @@ function validateModifDiv(region_id, doc) {
 	document.getElementById("doctor_listing_validate_update_" + region_id).innerHTML = htmlValidate;	
 }
 
-function saveNewDoctorsSalesProLink(region_id) {
+function saveNewDoctorsSalesProLink(region_id, doc) {
 	
 
 	user_token_uri = encodeURIComponent(user_token);
 	region_id_uri = encodeURIComponent(region_id);
-	//console.log(modif_doctor_sales_pro_link[region_id]);
-	modif_doctors_sales_pro_link_json = JSON.stringify(modif_doctor_sales_pro_link[region_id]);
-	//console.log(modif_doctors_sales_pro_link_json);
-	modif_doctors_sales_pro_link_uri  = encodeURIComponent(modif_doctors_sales_pro_link_json);
-	//console.log(modif_doctors_sales_pro_link_uri);
+	console.log(modif_doctor_sales_pro_link[region_id]);
 	
-    var url = host + "WebServices/Region/WS_Update_Doctor_Sales_Pro_Link_By_Region.php?region_id=" + region_id_uri + "&dspl=" + modif_doctors_sales_pro_link_uri + "&user_token=" + user_token_uri;
+	const keys_to_keep = ['doc_identifiant', 'sales_pro_token_new'];
+
+	const redux = array => array.map(o => keys_to_keep.reduce((acc, curr) => {
+	  acc[curr] = o[curr];
+	  return acc;
+	}, {}));
+
+	modif_doctor_sales_pro_link_light = redux(modif_doctor_sales_pro_link[region_id]);
+	
+	console.log(modif_doctor_sales_pro_link_light);
+	
+	modif_doctor_sales_pro_link_light_json = JSON.stringify(modif_doctor_sales_pro_link_light);
+	console.log(modif_doctor_sales_pro_link_light_json);
+	
+	modif_doctors_sales_pro_link_light_uri  = encodeURIComponent(modif_doctor_sales_pro_link_light_json);
+	console.log(modif_doctors_sales_pro_link_light_uri);
+	
+    var url = host + "WebServices/Region/WS_Update_Doctor_Sales_Pro_Link_By_Region.php?region_id=" + region_id_uri + "&dspl=" + modif_doctors_sales_pro_link_light_uri + "&user_token=" + user_token_uri;
     console.log(url);
-    
+
     var xhr = new XMLHttpRequest();
     xhr.timeout = 2000;
     xhr.onload = function (e) {
@@ -4778,6 +4819,8 @@ function saveNewDoctorsSalesProLink(region_id) {
 					+ '</table>';
 				$("#doctor_listing_update_result_" + region_id).html(htmlResult).fadeIn();
 				$("#saveNewDoctorsSalesProLink").click(function() {
+					//on appelle la fonction qui met à jour le div de la région
+					getAgencyDoctorsRegionId(region_id, doc);
 					//On réinitialise le tableau de la région qui a été enregistré
 					//modif_doctor_sales_pro_link[region_id] = [];
 					//console.log(modif_doctor_sales_pro_link[region_id]);
@@ -4813,14 +4856,11 @@ function saveNewDoctorsSalesProLink(region_id) {
 		$("#doctor_listing_update_result_" + region_id).html(htmlResult).fadeIn();
 		$("#saveNewDoctorsSalesProLink").click(function() {
 			saveNewDoctorsSalesProLink(region_id);
-			//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
+			
 		})
     };
     xhr.open("GET", url, true);
     xhr.send(); 
-	
-	
-	
 }
 
 
