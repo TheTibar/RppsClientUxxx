@@ -3819,7 +3819,7 @@ function createSalesProRecap(agency_token, new_sales_pro) { //OK Uxxx
 	
 }
 
-function createSalesPro(agency_token, new_sales_pro) { //OK Uxxx, reste la partie Update plutôt que création sur un utilisateur existant
+function createSalesPro(agency_token, new_sales_pro) { //OK Uxxx, si user existe, on met une demande d'envoi de message
 	
 	new_sales_pro.agency_token = agency_token;
 	new_sales_pro.user_token = user_token;
@@ -3872,6 +3872,27 @@ function createSalesPro(agency_token, new_sales_pro) { //OK Uxxx, reste la parti
 					createSalesPro(agency_token, new_sales_pro);
 				})
 				break;
+			case "user_email_already_exists":
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+					+ '<tr>'
+						+ '<th>Information</th>'
+						+ '<th>Action</th>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information">' + response.status_message + '</td>'
+						+ '<td data-th="Action"></td>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information"></td>'
+						+ '<td data-th="Action">Message&nbsp;<img id="createSalesPro" title="Message" class = "img_in_table" style="cursor: pointer;" src="img/message.png"/></td>'
+					+ '</tr>'
+				+ '</table>';
+				$("#agency_create_sales_pro_result").html(htmlResult).fadeIn();
+				$("#createSalesPro").click(function() {
+					createSalesProPage();
+				})
+				break;
 			case "create_user_completed":
 				htmlResult = ''
 					+ '<table class="rwd-table">'
@@ -3885,7 +3906,7 @@ function createSalesPro(agency_token, new_sales_pro) { //OK Uxxx, reste la parti
 						+ '</tr>'
 						+ '<tr>'
 							+ '<td data-th="Information"></td>'
-							+ '<td data-th="Action">Résultat&nbsp;<img id = "createSalesPro" title="Créer" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+							+ '<td data-th="Action">Résultat&nbsp;<img id = "createSalesPro" title="Résultat" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
 						+ '</tr>'
 					+ '</table>';
 				$("#agency_create_sales_pro_result").html(htmlResult).fadeIn();
@@ -4029,7 +4050,7 @@ function getAgencySalesProAfter(agency_token) { //OK Uxxx, on revient peut-être
 							+ '<td data-th="Email"></td>'
 							+ '<td data-th="Région"></td>'
 							+ '<td data-th="Couleur carte"></td>'
-							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProAfter" title="Vérifier" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+							+ '<td data-th="Action">Terminer&nbsp;<img id = "getAgencySalesProAfter" title="Terminer" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
 						+ '</tr>'
 					+ '</table>';
 				$("#agency_sales_pro_after_result").html(htmlResult).fadeIn();
