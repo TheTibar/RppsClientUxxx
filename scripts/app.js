@@ -2645,7 +2645,7 @@ function updateMapOptionArrayUnselectAll(data_type) { //OK Uxxx, même fonctionn
 	//console.log(values);
 	document.getElementById('speciality_all').disabled = false;
 	document.getElementById('speciality_none').disabled = true;
-	updateMapOptionArray(data_type);
+	return updateMapOptionArray(data_type);
 }
 
 function updateMapOptionArraySelectAll(data_type) { //OK Uxxx, même fonctionnement que updateMapOptionArray mais force la sélection de tous les éléments
@@ -2661,7 +2661,7 @@ function updateMapOptionArraySelectAll(data_type) { //OK Uxxx, même fonctionnem
 	document.getElementById('speciality_all').disabled = true;
 	document.getElementById('speciality_none').disabled = false;
 	//console.log(values);
-	updateMapOptionArray(data_type);
+	return updateMapOptionArray(data_type);
 }
 
 function chooseRegionMap(agency_id) { //OK Uxxx
@@ -2826,7 +2826,7 @@ function chooseSpecialityMap(region_map, agency_id) { //OK Uxxx
 										+ 'id = "'
 										+ 'speciality_all'
 										+ '" '
-										+ is_checked
+										+ ''
 										+ ' onclick="'
 										+ 'speciality_map = updateMapOptionArraySelectAll(' + '\'' + 'speciality' + '\'' + ');">'
 										/*+ libelle*/
@@ -3016,6 +3016,7 @@ function generateMapv4(region_map, speciality_map, agency_id) { //avec pondérat
 					break;
 				case "data_for_map_creation":
 					//console.log('appel v4');
+					$("#alert_recup_donnees_carto").html("").fadeIn();
 					htmlRender = '<div id="map"></div>';
 					document.getElementById("map_render").innerHTML = htmlRender;
 					displayMapv5(response.data, region_map);
