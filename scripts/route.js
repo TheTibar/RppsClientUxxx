@@ -84,6 +84,15 @@ function router() {
 				};
 				logoutPage();
 			}).resolve();
+	
+	router.on(
+			'Gerer_Commercial', function () {
+				if (element = document.getElementById("legend")) 
+				{
+					element.parentNode.removeChild(element);
+				};
+				modifySalesProPage();
+			}).resolve();
 
 	router.notFound(function () {
         window.alert("Router Not found");

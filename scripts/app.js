@@ -4158,6 +4158,12 @@ function createDoctorSalesProLinkPage() {
 	 1 - l'agence sélectionnée de l'utilisateur connecté (1 seule) : appel de currentUserAgencySelectDSPL si il y a plusieurs agences dans son profil
 	 2 - les rôles possibles (dans la table rpps_mstr_role_can_create)
 	 3 - les régions possibles (dans la table rpps_mstr_agency_region)
+	 
+	 On choisit l'agence, puis on récupère l'ensemble des docteurs sur les régions liées à l'agence pour lesquelles l'utilisateur connecté a les droits
+	 On récupère ces données dans le tableau "doc"
+	 On travaille sur les modifications dans un tableau temporaire "modif_doctor_sales_pro_link"
+	 Lorsque l'on a modifié les données souahitées, on "réduit" "modif_doctor_sales_pro_link" pour ne garder que les nouveaux liens dans "modif_doctor_sales_pro_link_light"
+	 On passe "modif_doctor_sales_pro_link_light" au WS de mise à jour et on efface les données dans "modif_doctor_sales_pro_link"
 	*/
 
 }
@@ -4333,7 +4339,7 @@ function getAgencyDoctors(agency_token) { //OK Uxxx ; no_user_region_agency à g
     xhr.send();  
 }
 
-function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre et le mettre à jour ; KO pour le moment
+function getAgencyDoctorsRegionId(region_id, doc) { //passer doc en paramètre et le mettre à jour ; OK Uxxx
 	
 	
 	console.log("doctor_listing_result_" + region_id);
@@ -4887,7 +4893,210 @@ function saveNewDoctorsSalesProLink(region_id, doc) {
 
 
 //DEBUT Modifier commercial
+function modifySalesProPage() {
+	if (alreadyConnected()) 
+	{ //à mettre au début de chaque fonction Page
+		if (! document.getElementById("#content") || ! document.getElementById("#left_menu")) {
+			populateApp();
+		}
+		var htmlRender = ''
+			+ '<div class = "action" id="action_choix_agence"></div>'
+			+ '<div class = "action" id="action_comm_agence"></div>'
+			+ '<div class = "action" id="action_creer_comm_input"></div>'
+			+ '<div class = "action" id="action_creer_comm_select"></div>'
+			+ '<div class = "action" id="action_creer_comm_recap"></div>'
+			+ '<div class = "action" id="action_creer_comm_result"></div>'
+			+ '<div class = "action" id="action_creer_comm_after"></div>'
+			;
+		document.getElementById("content").innerHTML = htmlRender;
+		currentUserAgencySelectMSP();
+	}
+	else
+	{
+		router.navigate('');
+	}
+}
 
+function currentUserAgencySelectMSP() { //OK Uxxx
+	
+	htmlRender = '';
+	htmlRender = htmlRender 
+		+ '<div class = "agency_list" id = "agency_list" style="cursor: pointer;" onclick = "toggleDiv(\'agency_list_result\');">Choisir une agence'
+		+ '</div>'
+		+ '<div class = "agency_list_result" id = "agency_list_result">'
+		+ '</div>'
+		;
+	
+	document.getElementById("action_choix_agence").innerHTML = htmlRender;
+	
+	
+	htmlResult = ''
+		+ '<table class="rwd-table">'
+		+ '<tr>'
+			+ '<th>Agence</th>'
+			+ '<th>Action</th>'
+		+ '</tr>';
+	htmlResultDetail = '';
+	for (var i = 0; i < user_data.agency_array.length; i++) {
+		htmlResultDetail = htmlResultDetail
+			+ '<tr>'
+				+ '<td data-th="Agence">' + user_data.agency_array[i].agency_name + '</td>'
+				+ '<td data-th="Action">Sélectionner&nbsp;<img id="currentUserAgencySelectCU_' + user_data.agency_array[i].agency_id + '" onclick = "getAgencySalesProMSP(' + '\'' + user_data.agency_array[i].agency_token + '\'' + ');" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+			+ '</tr>';
+	}
+	htmlResult = htmlResult
+		+ htmlResultDetail
+		+ '</table>';
+	$("#agency_list_result").html(htmlResult).fadeIn();
+}
+
+function getAgencySalesProMSP(agency_token) { //OK Uxxx
+	
+	agency_token_uri = encodeURIComponent(agency_token);
+	user_token_uri = encodeURIComponent(user_token);
+	
+	htmlRender = '';
+	htmlRender = htmlRender 
+		+ '<div class = "agency_sales_pro" id = "agency_sales_pro" style="cursor: pointer;" onclick = "toggleDiv(\'agency_sales_pro_result\');">Liste des commerciaux'
+		+ '</div>'
+		+ '<div class = "agency_sales_pro_result" id = "agency_sales_pro_result">'
+		+ '</div>'
+		;
+	
+	document.getElementById("action_comm_agence").innerHTML = htmlRender;
+	
+    var url = host + "WebServices/Agency/WS_Get_Sales_Pro_By_Agency.php?agency_token=" + agency_token_uri + "&user_token=" + user_token_uri;
+    console.log(url);
+
+
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 2000;
+    xhr.onload = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			//console.log(response);
+			switch(response.status_message) {
+			case "fatal_error_agency_id":
+        		logout();
+        		break;
+			default:
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+					+ '<tr>'
+						+ '<th>Information</th>'
+						+ '<th>Action</th>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information">' + response.status_message + '</td>'
+						+ '<td data-th="Action"></td>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information"></td>'
+						+ '<td data-th="Action">Relancer&nbsp;<img id="getAgencySalesProCU" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+					+ '</tr>'
+				+ '</table>';
+				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
+				$("#getAgencySalesProCU").click(function() {
+					getAgencySalesProCU(agency_token);
+				})
+				break;
+			case "no_agency_sales_pro":
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+						+ '<tr>'
+							+ '<th>Information</th>'
+							+ '<th>Action</th>'
+						+ '</tr>'
+						+ '<tr>'
+							+ '<td data-th="Information">' + response.status_message + '</td>'
+							+ '<td data-th="Action"></td>'
+						+ '</tr>'
+						+ '<tr>'
+							+ '<td data-th="Information"></td>'
+							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProCU" title="Créer" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+						+ '</tr>'
+					+ '</table>';
+				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
+				$("#getAgencySalesProCU").click(function() {
+					//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
+					createSalesProFormInput(agency_token);
+				})
+				break;
+			case "agency_sales_pro":
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+						+ '<tr>'
+							+ '<th>Nom</th>'
+							+ '<th>Prénom</th>'
+							+ '<th>Email</th>'
+							+ '<th>Région</th>'
+							+ '<th>Couleur carte</th>'
+							+ '<th>Action</th>'
+						+ '</tr>';
+				htmlResultDetail = '';
+				for (var i = 0; i < response.data.length; i++) {
+					htmlResultDetail = htmlResultDetail 
+						+ '<tr>'
+							+ '<td data-th="Nom">' + response.data[i]['last_name'] + '</td>' 
+							+ '<td data-th="Prénom">' + response.data[i]['first_name'] + '</td>'
+							+ '<td data-th="Email">' + response.data[i]['email'] + '</td>'
+							+ '<td data-th="Région">' + capitalizeWords(response.data[i]['region']) + '</td>'
+							+ '<td data-th="Couleur carte" bgcolor = ' + response.data[i]['color'] + '></td>'
+							+ '<td data-th="Action"></td>'
+						+ '</tr>';
+				}
+				htmlResult = htmlResult 
+					+ htmlResultDetail
+						+ '<tr>'
+							+ '<td data-th="Nom"></td>'
+							+ '<td data-th="Prénom"></td>'
+							+ '<td data-th="Email"></td>'
+							+ '<td data-th="Région"></td>'
+							+ '<td data-th="Couleur carte"></td>'
+							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProCU" title="Vérifier" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+						+ '</tr>'
+					+ '</table>';
+				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
+				$("#getAgencySalesProCU").click(function() {
+					//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
+					createSalesProFormInput(agency_token);
+				})
+				break;
+			}
+        }
+    };
+    xhr.ontimeout = function () {
+    	htmlResult = ''
+			+ '<table class="rwd-table">'
+				+ '<tr>'
+					+ '<th>Information</th>'
+					+ '<th>Action</th>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td data-th="Information">Timeout</td>'
+					+ '<td data-th="Action"></td>'
+				+ '</tr>'
+				+ '<tr>'
+					+ '<td data-th="Information"></td>'
+					+ '<td data-th="Action">Relancer&nbsp;<img id = "getAgencySalesProCU" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+				+ '</tr>'
+			+ '</table>';
+		$("#agency_sales_pro_result").html(htmlResult).fadeIn();
+		$("#getAgencySalesProCU").click(function() {
+			getAgencySalesProCU(agency_token);
+			//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
+		})
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
+
+/*	
+	Attention, ne pas modifier la sélection des utilisateurs, la personne qui a les droits sur la création ou la modification d'un utilisateur
+ 	doit être capable de voir tous les utilisateurs d'une agence, ne serait-ce que pour des problématiques de choix de couleur
+*/
 
 //FIN Modifier commercial
 
