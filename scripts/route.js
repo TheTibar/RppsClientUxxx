@@ -14,6 +14,7 @@ function router() {
 	var hash = '#' // Defaults to: '#'
 	
 	router = new Navigo(root, useHash, hash); 
+    
 	router.on(function () {
 		//console.log("Routeur RACINE");
 		//console.log(router);
