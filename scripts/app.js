@@ -4886,4 +4886,28 @@ function saveNewDoctorsSalesProLink(region_id, doc) {
 }
 
 
+//DEBUT Modifier commercial
+
+
+//FIN Modifier commercial
+
+//DEBUT Statistiques commercial
+
+
+//FIN Statistiques commercial
+
 //FIN Commercial
+
+
+//DEBUT Agence
+
+
+
+//FIN Agence
+
+
+
+
+
+
+
