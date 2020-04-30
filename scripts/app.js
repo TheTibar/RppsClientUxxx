@@ -4965,7 +4965,7 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 	
 	document.getElementById("action_comm_agence").innerHTML = htmlRender;
 	
-    var url = host + "WebServices/Agency/WS_Get_Sales_Pro_By_Agency.php?agency_token=" + agency_token_uri + "&user_token=" + user_token_uri;
+    var url = host + "WebServices/Agency/WS_Get_Sales_Pro_Summary_By_Agency.php?agency_token=" + agency_token_uri + "&user_token=" + user_token_uri;
     console.log(url);
 
 
@@ -4975,7 +4975,7 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
         if (xhr.readyState === 4) {
 			//console.log(xhr);
 			var response = JSON.parse(xhr.responseText);
-			//console.log(response);
+			console.log(response);
 			switch(response.status_message) {
 			case "fatal_error_agency_id":
         		logout();
@@ -4993,12 +4993,12 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 					+ '</tr>'
 					+ '<tr>'
 						+ '<td data-th="Information"></td>'
-						+ '<td data-th="Action">Relancer&nbsp;<img id="getAgencySalesProCU" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+						+ '<td data-th="Action">Relancer&nbsp;<img id="getAgencySalesProMSP" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
 					+ '</tr>'
 				+ '</table>';
 				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-				$("#getAgencySalesProCU").click(function() {
-					getAgencySalesProCU(agency_token);
+				$("#getAgencySalesProMSP").click(function() {
+					getAgencySalesProMSP(agency_token);
 				})
 				break;
 			case "no_agency_sales_pro":
@@ -5014,16 +5014,17 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 						+ '</tr>'
 						+ '<tr>'
 							+ '<td data-th="Information"></td>'
-							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProCU" title="Créer" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProMSP" title="Créer" class = "img_in_table" style="cursor: pointer;" src="img/message.png"/></td>'
 						+ '</tr>'
 					+ '</table>';
 				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-				$("#getAgencySalesProCU").click(function() {
+				$("#getAgencySalesProMSP").click(function() {
 					//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
-					createSalesProFormInput(agency_token);
+					//createSalesProFormInput(agency_token); Plutôt message pour demander la création d'utilisateurs
 				})
 				break;
 			case "agency_sales_pro":
+				//console.log("agency_sales_pro");
 				htmlResult = ''
 					+ '<table class="rwd-table">'
 						+ '<tr>'
@@ -5035,33 +5036,73 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 							+ '<th>Action</th>'
 						+ '</tr>';
 				htmlResultDetail = '';
-				for (var i = 0; i < response.data.length; i++) {
+				for (var i = 0; i < response.data.agency_sales_pro.length; i++) {
+					
+					//region_code_array = doc.region_array.filter(x => x.region_id == region_id)[0];
+					dataCURegion_array = response.data.sales_pro_region.filter(x => x.user_id == response.data.agency_sales_pro[i]['user_id']);
+					dataCURegion_array = dataCURegion_array.map(x => x['region_id']);
+					console.log(dataCURegion_array);
+					
+						
+
 					htmlResultDetail = htmlResultDetail 
 						+ '<tr>'
-							+ '<td data-th="Nom">' + response.data[i]['last_name'] + '</td>' 
-							+ '<td data-th="Prénom">' + response.data[i]['first_name'] + '</td>'
-							+ '<td data-th="Email">' + response.data[i]['email'] + '</td>'
-							+ '<td data-th="Région">' + capitalizeWords(response.data[i]['region']) + '</td>'
-							+ '<td data-th="Couleur carte" bgcolor = ' + response.data[i]['color'] + '></td>'
-							+ '<td data-th="Action"></td>'
+							+ '<td data-th="Nom">' + response.data.agency_sales_pro[i]['last_name'] + '</td>' 
+							+ '<td data-th="Prénom">' + response.data.agency_sales_pro[i]['first_name'] + '</td>'
+							+ '<td data-th="Email">' + response.data.agency_sales_pro[i]['email'] + '</td>';
+					
+							
+					htmlResultRegion = '';
+					is_checked = '';
+					for (var j = 0; j < response.data.agency_region.length; j++) {
+						console.log(dataCURegion_array);
+						console.log(response.data.agency_region[j]['region_id']);
+						/**/
+						region_label = response.data.agency_region[j]['region_libelle'];
+						region_code = response.data.agency_region[j]['region_code'];
+						if (dataCURegion_array.includes(response.data.agency_region[j]['region_id'])) {
+							is_checked = 'checked';
+						}
+						else {
+							is_checked = '';
+						}
+						htmlResultRegion = htmlResultRegion
+							+ '<input type = "checkbox" name = "region" value = "'
+							+ region_code
+							+ '" '
+							+ 'id = "'
+							+ region_code
+							+ '" '
+							+ is_checked
+							+ ' disabled'
+							+ '>'
+							/*+ libelle*/
+							+ '<label for = "'
+							+ region_code
+							+ '">'
+							+ capitalizeWords(region_label)
+							+ '</br>'
+							+ '</label>';
+					}
+					
+					
+					htmlResultDetail = htmlResultDetail 
+							+ '<td data-th="Région">' + htmlResultRegion + '</td>'
+							//+ '<td data-th="Région">' + capitalizeWords('A GERER') + '</td>'
+							//+ '<td data-th="Couleur carte" bgcolor = ' + response.data.agency_sales_pro[i]['color'] + '></td>'
+							+ '<td data-th="Couleur carte">'
+							+ '<div id="circle_' + response.data.agency_sales_pro[i]['user_id'] 
+								+ '" style="background:' + response.data.agency_sales_pro[i]['color'] +';'
+								+ 'border-radius:50%;width:20px;height:20px;margin:auto;">'
+							+ '</div>'
+							+ '</td>'
+							+ '<td data-th="Action">Modifier&nbsp;<img id = "getAgencySalesProMSP_' + response.data.agency_sales_pro[i]['user_id'] + '" title="Modifier" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
 						+ '</tr>';
 				}
 				htmlResult = htmlResult 
 					+ htmlResultDetail
-						+ '<tr>'
-							+ '<td data-th="Nom"></td>'
-							+ '<td data-th="Prénom"></td>'
-							+ '<td data-th="Email"></td>'
-							+ '<td data-th="Région"></td>'
-							+ '<td data-th="Couleur carte"></td>'
-							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProCU" title="Vérifier" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
-						+ '</tr>'
 					+ '</table>';
 				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-				$("#getAgencySalesProCU").click(function() {
-					//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
-					createSalesProFormInput(agency_token);
-				})
 				break;
 			}
         }
@@ -5079,12 +5120,12 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 				+ '</tr>'
 				+ '<tr>'
 					+ '<td data-th="Information"></td>'
-					+ '<td data-th="Action">Relancer&nbsp;<img id = "getAgencySalesProCU" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+					+ '<td data-th="Action">Relancer&nbsp;<img id = "getAgencySalesProMSP" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
 				+ '</tr>'
 			+ '</table>';
 		$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-		$("#getAgencySalesProCU").click(function() {
-			getAgencySalesProCU(agency_token);
+		$("#getAgencySalesProMSP").click(function() {
+			getAgencySalesProMSP(agency_token);
 			//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
 		})
     };
