@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+	<title>TEST LEAFLET</title>
+	<link rel="stylesheet" href="test.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+</head> 
+ 
+<body>
+ 
+
+<div id="mapid"></div>
+<script>
+var mymap = L.map('mapid').setView([51.505, -0.09], 13);
+
+var tileServer = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+	tileAttribution = 'Map data: <a href="http://openstreetmap.org">OSM</a>';
+
+L.tileLayer(tileServer, {attribution: tileAttribution,  maxZoom: 15}).addTo(mymap);
+
+var marker = L.marker([51.5, -0.09]).addTo(mymap);
+var htmlPopup = '';
+var htmlDetailPopup = '';
+
+
+htmlPopup = htmlPopup
++ '<table>'
+	+ '<tr>'
+		+ '<th>Spécialité</th>'
+		+ '<th>Nombre</th>'
+	+ '</tr>';
+
+
+for(var i = 0; i < 100; i++) {
+htmlDetailPopup = htmlDetailPopup
++ '<tr>'
+	+ '<td>Current value of i</td>'
+	+ '<td>' + i + '</td>'
++ '</tr>';	
+}
+
+
+htmlPopup = htmlPopup
++ htmlDetailPopup
++ '</table>';
+
+
+console.log(htmlPopup.length);
+
+marker.bindPopup(htmlPopup);
+
+</script>
+</body>
