@@ -4,7 +4,7 @@
 //LOCAL
 var host = 'http://192.168.0.19/RppsServeurUxxx/'
 //OVH
-//var host = 'https://reivaxweb.me/RppsServeur/'
+//var host = 'https://reivaxweb.me/RppsServeurUxxx/'
 
 //var token = '';
 var user_data = ''; //données de l'utilisateur connecté
@@ -3072,7 +3072,7 @@ function displayMapv5(data, region_map) { //OK Uxxx (pas de boucle sur région),
 		var w = data.geo[j].weight;
 		var pIcon = L.icon({
 		    iconUrl: 		host +  'Img/' + data.geo[j].color.substr(1, 6) + '.png', //on supprime les # à cause du routeur
-		    iconSize:     	[w > 0 ? 12 + Math.sqrt(w) : 0, w > 0 ? 12 + Math.sqrt(w) : 0], // size of the icon
+		    iconSize:     	[w > 0 ? 12 + Math.sqrt(w) : 0, w > 0 ? 12 + Math.sqrt(w) : 0], // size of the icon, icone carrée, 2 fois les mêmes dimensions
 		    iconAnchor:   	[0, 0], // point of the icon which will correspond to marker's location
 		    popupAnchor:  	[0, -5] // point from which the popup should open relative to the iconAnchor
 		});
@@ -3109,6 +3109,7 @@ function displayMapv5(data, region_map) { //OK Uxxx (pas de boucle sur région),
 						+ '<th>Nombre</th>'
 					+ '</tr>';
 			
+
 			for(var k = 0; k < arrayCurrentUser.length; k++) {
 				htmlDetailPopup = htmlDetailPopup
 				+ '<tr>'
@@ -3116,12 +3117,15 @@ function displayMapv5(data, region_map) { //OK Uxxx (pas de boucle sur région),
 					+ '<td>' + arrayCurrentUser[k].nb_spec_by_sp + '</td>'
 				+ '</tr>';	
 			}
-			/**/
+			
+
 			htmlPopup = htmlPopup
 				+ htmlDetailPopup
 				+ '</table>';
 
+			
 			marker.bindPopup(htmlPopup);
+
 		}
 		else {
 			marker.bindPopup(title);
