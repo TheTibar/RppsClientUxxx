@@ -109,7 +109,7 @@
 
         //console.log('r:' + r + ', weight:' + weight + ', size:' + size + ', arcRadius:' + arcRadius);
         
-        
+        //console.log(size0);
         svg.setAttribute('height', size0 + 'px');
         svg.setAttribute('width', size0 + 'px');
         
@@ -329,8 +329,9 @@
             innerCircleRadius: innerCircleRadius
         });
         myDonut.config = cfg;
+        myDonut.svgSize = size;
         
-        //console.log(myDonut);
+        //console.log(size);
         //console.log(blocks);
         
         return myDonut;
@@ -374,7 +375,7 @@
             // c += 'large';
             fill = '#fd9c73'
         }
-        //console.log(size + ' ' + weight + ' ' + fill);
+        //console.log(count + ' ' + size + ' ' + weight + ' ' + fill);
         return {
             size: size,
             weight: weight,
@@ -396,6 +397,7 @@
                 var style;
                 if (!donutOpt.style) {
                 	//console.log('default');
+                	
                     style = defaultStyle(points)
                 } else {
                     if (typeof donutOpt.style == 'function') {
@@ -413,11 +415,12 @@
                 }
             })
             
-            
+            //console.log(myDonut.svgSize);
 
             return new L.DivIcon({
                 el: myDonut,
-                iconSize: new L.Point(myDonut.config.size + 10, myDonut.config.size + 10),
+                //iconSize: new L.Point(myDonut.config.size + 10, myDonut.config.size + 10),
+                iconSize: new L.Point(myDonut.svgSize + 10, myDonut.svgSize + 10),
                 className: 'donut-cluster'
             });
 
