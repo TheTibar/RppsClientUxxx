@@ -2,9 +2,9 @@
 //RPPS
 //var host = 'http://localhost/RppsServeur/';
 //LOCAL
-var host = 'http://192.168.0.19/RppsServeurUxxx/'
+//var host = 'http://192.168.0.19/RppsServeurUxxx/'
 //OVH
-//var host = 'https://reivaxweb.me/RppsServeurUxxx/'
+var host = 'https://reivaxweb.me/RppsServeurUxxx/'
 
 //var token = '';
 var user_data = ''; //données de l'utilisateur connecté
@@ -743,7 +743,7 @@ function chooseRegionAction(agency_id) { //OK Uxxx
 	for(var i = 0; i < region_array.length; i++) {
 		htmlRender = htmlRender 
 			//+ '<div class="region_comptage" id = "region_comptage_' + user_data.region_array[i].region_id + '">'
-			+ '<div class="region_comptage" id = "region_comptage_' + i + '">'
+			+ '<div class="region_comptage" id = "region_comptage_' + region_array[i].region_id + '">'
 			+ capitalizeWords(region_array[i].libelle)
 			/*
 			+ '<table>'
@@ -756,7 +756,7 @@ function chooseRegionAction(agency_id) { //OK Uxxx
 			*/
 			+ '</div>'
 			//+ '<div class = "region_comptage_result" id = "region_comptage_result_' + user_data.region_array[i].region_id + '">'
-			+ '<div class = "region_comptage_result" id = "region_comptage_result_' + i + '">'
+			+ '<div class = "region_comptage_result" id = "region_comptage_result_' + region_array[i].region_id + '">'
 				+ '<table class="rwd-table">'
 					+ '<tr>'
 						+ '<th>Information</th>'
@@ -827,13 +827,13 @@ function chooseRegions(region_array) { //ok region_token; OK Uxxx
 							+ '<td data-th="Donnée"></td>'
 							+ '<td data-th="Valeur actuelle"></td>'
 							+ '<td data-th="Nouvelle valeur"></td>'
-							+ '<td data-th="Action">Vérifier&nbsp;<img id="chooseRegion_' + i + '" title="Vérifier" class = "img_in_table" style="cursor: pointer;" src="img/check_consistency.png"/></td>'
+							+ '<td data-th="Action">Vérifier&nbsp;<img id="chooseRegion_' + region_array[i].region_id + '" title="Vérifier" class = "img_in_table" style="cursor: pointer;" src="img/check_consistency.png"/></td>'
 						+ '</tr>'
 					+ '</table>';
 				
 
-				$("#region_comptage_result_" + i).html(htmlResult).fadeIn();
-				$("#chooseRegion_" + i).click(function() {
+				$("#region_comptage_result_" + region_array[i].region_id).html(htmlResult).fadeIn();
+				$("#chooseRegion_" + region_array[i].region_id).click(function() {
 					checkDataConsistencyBefore(region_array[i].region_token);
 				})
 				break;
@@ -850,12 +850,12 @@ function chooseRegions(region_array) { //ok region_token; OK Uxxx
 							+ '</tr>'
 							+ '<tr>'
 								+ '<td data-th="Information"></td>'
-								+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegion_' + i + '" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+								+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegion_' + region_array[i].region_id + '" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
 							+ '</tr>'
 						+ '</table>';
-					$("#region_comptage_result_" + i).html(htmlResult).fadeIn();
-					$("#chooseRegion_" + i).click(function() {
-						refreshRegion(region_array[i].region_token, i)
+					$("#region_comptage_result_" + region_array[i].region_id).html(htmlResult).fadeIn();
+					$("#chooseRegion_" + region_array[i].region_id).click(function() {
+						refreshRegion(region_array[i].region_token, region_array[i].region_id)
 					})
 					break;
 	        }
@@ -875,12 +875,12 @@ function chooseRegions(region_array) { //ok region_token; OK Uxxx
 					+ '</tr>'
 					+ '<tr>'
 						+ '<td data-th="Information"></td>'
-						+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegion_' + i + '" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+						+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegion_' + region_array[i].region_id + '" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
 					+ '</tr>'
 				+ '</table>';
-			$("#region_comptage_result_" + i).html(htmlResult).fadeIn();
-			$("#chooseRegion_" + i).click(function() {
-				refreshRegion(region_array[i].region_token, i)
+			$("#region_comptage_result_" + region_array[i].region_id).html(htmlResult).fadeIn();
+			$("#chooseRegion_" + region_array[i].region_id).click(function() {
+				refreshRegion(region_array[i].region_token, region_array[i].region_id)
 			})
 	    };
 	}
@@ -1005,14 +1005,18 @@ function refreshRegion(region_token, i) { //i en paramètre correspond au div_id
 }
 
 function checkDataConsistencyBefore(region_token) { //OK Uxxx
+	
+	console.log(region_token);
+	
 	region_token_uri = encodeURIComponent(region_token);
 	user_token_uri = encodeURIComponent(user_token);
 	//On supprime tous les div des autres régions pour ne garder que le div sur lequel on a cliqué
+	//Bug, si un utilisateur a plusieurs agences, son user_data_region_array est plus grand que 
 	for (i = 0; i < user_data.region_array.length; i++) {
 		if(user_data.region_array[i].region_token != region_token)
 		{
-			$("#region_comptage_" + i).remove();
-			$("#region_comptage_result_" + i).remove();
+			$("#region_comptage_" + user_data.region_array[i].region_id).remove();
+			$("#region_comptage_result_" + user_data.region_array[i].region_id).remove();
 			
 		}
 	}
