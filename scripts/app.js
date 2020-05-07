@@ -2,9 +2,9 @@
 //RPPS
 //var host = 'http://localhost/RppsServeur/';
 //LOCAL
-//var host = 'http://192.168.0.19/RppsServeurUxxx/'
+var host = 'http://192.168.0.19/RppsServeurUxxx/'
 //OVH
-var host = 'https://reivaxweb.me/RppsServeurUxxx/'
+//var host = 'https://reivaxweb.me/RppsServeurUxxx/'
 
 //var token = '';
 var user_data = ''; //données de l'utilisateur connecté
@@ -1752,7 +1752,7 @@ function doctorCreateManagement(region_token) { //OK Uxxx
     var url = host + "WebServices/NewRPPS/WS_Get_New_Doctors_List_By_Speciality.php?process_id=" + process_id_uri + "&region_token=" + region_token_uri + "&user_token=" + user_token_uri;
     //console.log(url);
     var xhr = new XMLHttpRequest();
-    xhr.timeout = 2000;
+    xhr.timeout = 3000;
     xhr.onload = function (e) {
         if (xhr.readyState === 4) {
         	var response = JSON.parse(xhr.responseText);
@@ -1849,15 +1849,15 @@ function doctorCreateManagement(region_token) { //OK Uxxx
 				+ '<th>Action</th>'
 			+ '</tr>'
 			+ '<tr>'
-				+ '<td data-th="Information">Impossible de se connecter à la base de données</td>'
+				+ '<td data-th="Information">Timeout</td>'
 				+ '<td data-th="Action"></td>'
 			+ '</tr>'
 			+ '<tr>'
 				+ '<td data-th="Information"></td>'
-				+ '<td data-th="Action">Relancer&nbsp;<img id="doctorCreateManagement" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/add_doctors_retry.png"/></td>'
+				+ '<td data-th="Action">Relancer&nbsp;<img id="doctorCreateManagement" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
 			+ '</tr>'
 		+ '</table>';
-		$("#region_leaving_result").html(htmlResult).fadeIn();
+		$("#region_arriving_result").html(htmlResult).fadeIn();
 		$("#doctorCreateManagement").click(function() {
 			doctorCreateManagement(region_token)
 		})
@@ -2249,7 +2249,7 @@ function checkDataConsistencyAfter(region_token) {//OK Uxxx
 			+ '</tr>'
 			+ '<tr>'
 				+ '<td data-th="Information"></td>'
-				+ '<td data-th="Action">Relancer&nbsp;<img id="consistencyAfter" title="Réessayer" class = "img_in_table" style="cursor: pointer;" src="img/consistency_retry.png"/></td>'
+				+ '<td data-th="Action">Relancer&nbsp;<img id="consistencyAfter" title="Réessayer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
 			+ '</tr>'
 		+ '</table>';
 		$("#region_verif_apres_result").html(htmlResult).fadeIn();
