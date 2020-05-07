@@ -22,13 +22,15 @@
         return +(Math.round(num + "e+2") + "e-2");
     }
 
-    function readable(val) {
+    function readable(val) { //ne sert plus
+    	/*
         if (val >= 1000 && val < 1000000)
             val = roundToTwo(val / 1000) + 'K'
         else if (val >= 1000000 && val < 1000000000)
             val = roundToTwo(val / 1000000) + 'M'
         else if (val >= 1000000000)
             val = roundToTwo(val / 1000000000) + 'B'
+            */
         return val;
     }
     var doc = document,
