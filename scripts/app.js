@@ -3107,7 +3107,12 @@ function displayMapv5(data, region_map) { //OK Uxxx (pas de boucle sur région),
 			var htmlDetailPopup = '';
 			/**/
 			htmlPopup = htmlPopup
+				//+ '<label style="color:blue; text-align:center; font-weight: bold;">' + data.geo[j].commune + '</label>'
 				+ '<table>'
+					+ '<tr>'
+						+ '<td colspan="2" style="color:blue; text-align:center; font-weight: bold;">'
+						+ data.geo[j].commune
+						+ '</td>'
 					+ '<tr>'
 						+ '<th>Spécialité</th>'
 						+ '<th>Nombre</th>'
