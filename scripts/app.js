@@ -1626,7 +1626,7 @@ function createCreateDoctors(region_token) { //OK Uxxx
 	var url = host + "WebServices/NewRPPS/WS_Create_Doctors.php?region_token=" + region_token_uri + "&user_token=" + user_token_uri;
     console.log(url);
     var xhr = new XMLHttpRequest();
-    xhr.timeout = 2000;
+    xhr.timeout = 10000;
     xhr.onload = function (e) {
         if (xhr.readyState === 4) {
 			//console.log(xhr);
