@@ -2569,6 +2569,7 @@ function createLastUpdateProcess(region_token) {//OK Uxxx
 //DEBUT Cartographie
 //source : https://github.com/akq/Leaflet.DonutCluster/blob/master/README.md
 
+//Début Carte par commercial
 function initMapPage() { //OK Uxxx
 	if (alreadyConnected()) 
 	{ //à mettre au début de chaque fonction Page
@@ -3261,6 +3262,868 @@ function setMovableLegend(divId) { //OK Uxxx
       el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
     }
 }
+//Fin carte par commercial
+
+
+//Début carte globale
+
+
+function updateFullMapOptionArray(data_type) { //OK Uxxx, permet de générer un tableau d'éléments passés en paramètre basé sur un form ayant pour nom data_type_list
+
+	//console.log(data_type);
+	var values = [];
+	var cbs = document.forms[data_type + "_list"].elements[data_type];
+	for(var i = 0; i<cbs.length; i++){
+	  if(cbs[i].checked){
+		values.push(cbs[i].id);
+	  } 
+	}
+	//console.log(values);
+	return values;
+}
+
+function updateFullMapOptionArrayUnselectAll(data_type) { //OK Uxxx, même fonctionnement que updateMapOptionArray mais force la désélection de tous les éléments
+	var values = [];
+	var cbs = document.forms[data_type + "_list"].elements[data_type];
+	for(var i = 0; i<cbs.length; i++){
+		x = document.getElementById(cbs[i].id);
+		//console.log(x);
+		x.checked = false;
+	}
+	document.getElementById(data_type + '_all').checked = false;
+	document.getElementById(data_type + '_all').disabled = false;
+	document.getElementById(data_type + '_none').disabled = true;
+	return updateFullMapOptionArray(data_type);
+}
+
+function updateFullMapOptionArraySelectAll(data_type) { //OK Uxxx, même fonctionnement que updateMapOptionArray mais force la sélection de tous les éléments
+	var values = [];
+	var cbs = document.forms[data_type + "_list"].elements[data_type];
+	for(var i = 0; i<cbs.length; i++){
+		//document.getElementById(cbs[i]).checked = false;
+		x = document.getElementById(cbs[i].id);
+		x.checked = true;
+		//console.log(x);
+	}
+	document.getElementById(data_type + '_none').checked = false;
+	document.getElementById(data_type + '_all').disabled = true;
+	document.getElementById(data_type + '_none').disabled = false;
+	//console.log(values);
+	return updateFullMapOptionArray(data_type);
+}
+
+function initFullMapPage() { //OK Uxxx
+	if (alreadyConnected()) 
+	{ //à mettre au début de chaque fonction Page
+		if (! document.getElementById("#content") || ! document.getElementById("#left_menu")) {
+			populateApp();
+		}
+		var htmlRender = ''
+			+ '<div class="action" id="action_choix_region"></div>'
+			+ '<div class="action" id="action_choix_specialite"></div>'
+			+ '<div id="map_render"></div>'
+			+ '<div class="alert" id="alert_recup_donnees_carto"></div>';
+		document.getElementById("content").innerHTML = htmlRender;
+		//generateMapv4();
+		chooseRegionFullMap();
+	}
+	else
+	{
+		router.navigate('');
+	}
+}
+
+function chooseRegionFullMap() { //OK Uxxx
+	//Récupération de la liste des spécialités et de leur filtre par défaut
+	//console.log(agency_id);
+	
+	htmlRender = '';
+	htmlRender = htmlRender 
+		+ '<div class = "region_list" id = "region_list" style="cursor: pointer;" onclick = "toggleDiv(\'region_list_result\');">Choisir les régions'
+		+ '</div>'
+		+ '<div class = "region_list_result" id = "region_list_result">'
+		+ '</div>'
+		;
+	
+	document.getElementById("action_choix_region").innerHTML = htmlRender;
+	
+	
+    var url = host + "WebServices/MapRPPS/WS_Get_All_Region_List_For_Map.php";
+    console.log(url);
+    
+
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 2000;
+    xhr.onreadystatechange = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			console.log(response);
+			switch(response.status_message) {
+			default:
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+					+ '<tr>'
+						+ '<th>Information</th>'
+						+ '<th>Action</th>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information">' + response.status_message + '</td>'
+						+ '<td data-th="Action"></td>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information"></td>'
+						+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegionFullMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+					+ '</tr>'
+				+ '</table>';
+				$("#region_list_result").html(htmlResult).fadeIn();
+				$("#chooseRegionFullMap").click(function() {
+					chooseRegionFullMap();
+				})
+				break;
+				case "data_region":
+					html_result = "Filtre sur les régions (" + response.data.length + ") : <br>";
+					
+					//Affichage liste, choix et mise à jour
+					//console.log(response.data);
+					
+					nb_row = 15;
+					
+					//arrondi à l'entier supérieur, ou garde la valeur si c'est un entier.
+					nb_col = Math.ceil(response.data.length / nb_row);
+					//console.log(response.data.length);
+					//console.log(nb_col);
+					
+
+
+					region_map = [];
+					htmlDetail = '<tr>';
+					htmlHeader = '';
+					htmlResult = '';
+					htmlLastRow = '';
+					is_checked = "checked"; //coché par défaut
+					
+					htmlSelectRegion = ''
+						+ '<form id = "region_list">';
+					
+					htmlResult = htmlResult
+						+ '<table class="rwd-table2">'
+
+					for (var i = 0; i < nb_row + 1; i++) { //+ 1 pour gérer la ligne d'entête
+						//console.log(i + ' ligne');
+						for (var j = 0; j < nb_col; j++) {
+							//console.log(j + ' colonne');
+							if (i == 0) {
+								//console.log('entête');
+								htmlHeader = htmlHeader
+									+ '<th>Région</th>';
+
+								if (j == 0) {
+									htmlLastRow = htmlLastRow
+										+ '<td data-th="Région">'
+										+ '<input type = "checkbox" name = "region_all" value = "'
+										+ 'region_all'
+										+ '" '
+										+ 'id = "'
+										+ 'region_all'
+										+ '" '
+										+ ''
+										+ ' onclick="'
+										+ 'region_map = updateFullMapOptionArraySelectAll(' + '\'' + 'region' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'all'
+										+ '">'
+										+ 'Toutes'
+										+ '</label>'
+									+ '</td>';
+								} else {
+									if (j == 1) {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Région">'
+										+ '<input type = "checkbox" name = "region_none" value = "'
+										+ 'region_none'
+										+ '" '
+										+ 'id = "'
+										+ 'region_none'
+										+ '" '
+										+ '' //is checked à vide par défaut
+										+ ' onclick="'
+										+ 'region_map = updateFullMapOptionArrayUnselectAll(' + '\'' + 'region' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'none'
+										+ '">'
+										+ 'Aucune'
+										+ '</label>'
+									+ '</td>';
+									}
+									else {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Région"></td>';
+									}
+								}
+								
+
+							} 
+							else {
+								//console.log('detail');
+								/* ordre alpha en ligne*/
+								//if (((i - 1) * nb_col + j) <  response.data.length) {
+								//	libelle = response.data[(i - 1) * nb_col + j].Libelle_savoir_faire;
+								//}
+								//else {
+								//	libelle = '';
+								//}
+								/*ordre alpha en colonne*/
+								if ((j * nb_row + (i - 1)) <  response.data.length) {
+									libelle = response.data[(j * nb_row + (i - 1))].label;
+									region_id = response.data[(j * nb_row + (i - 1))].region_id;
+								}
+								else {
+									libelle = false;
+								}
+								
+								if (libelle) {
+									//console.log(libelle);
+									htmlDetail = htmlDetail
+										+ '<td data-th="Région">'
+											+ '<input type = "checkbox" name = "region" value = "'
+											+ libelle
+											+ '" '
+											+ 'id = "'
+											+ region_id
+											+ '" '
+											+ is_checked
+											+ ' onclick="'
+											+ 'region_map = updateFullMapOptionArray(' + '\'' + 'region' + '\'' + ');">'
+											/*+ libelle*/
+											+ '<label for = "'
+											+ libelle
+											+ '">'
+											+ libelle
+											+ '</label>'
+										+ '</td>';
+										
+								}
+								
+							}
+						}
+						htmlDetail = htmlDetail
+							+ '<td data-th="Action"></td>'
+							+ '</tr>'
+							+ '<tr>';
+					}
+					
+					htmlHeader = 
+						'<tr>'
+						+ htmlHeader
+						+ '<th>Action</th>' 
+						+ '</tr>';
+					
+					htmlLastRow = htmlLastRow
+						+ '<td data-th="Action">Spécialités&nbsp<img id="chooseRegionFullMap" img class = "img_in_table" style="cursor: pointer;" onclick="chooseSpecialityFullMap(region_map);" src="img/next_step.png"/></td>';
+					
+					//console.log(htmlHeader);
+					
+					htmlResult = htmlResult
+						+ htmlHeader
+						+ htmlDetail
+						+ htmlLastRow
+						+ '</table>';
+					
+					htmlSelectRegion = htmlSelectRegion
+						+ htmlResult
+						+ '</form>';
+						
+
+						
+					//console.log(htmlSelectSpeciality);
+
+					//$("#action_choix_specialites").html(html_result).fadeIn();
+					$("#region_list_result").html(htmlSelectRegion).fadeIn();
+					
+					region_map = updateFullMapOptionArray('region'); //pour avoir un tableau rempli dès le premier passage
+					
+					break;
+			}
+        }
+    };
+    xhr.ontimeout = function () {
+		htmlResult = ''
+			+ '<table class="rwd-table">'
+			+ '<tr>'
+				+ '<th>Information</th>'
+				+ '<th>Action</th>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information">' + response.status_message + '</td>'
+				+ '<td data-th="Action"></td>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information"></td>'
+				+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegionFullMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+			+ '</tr>'
+		+ '</table>';
+		$("#region_list_result").html(htmlResult).fadeIn();
+		$("#chooseRegionFullMap").click(function() {
+			chooseRegionFullMap();
+		})
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
+function chooseSpecialityFullMap(region_map) { //OK Uxxx
+	//Récupération de la liste des spécialités et de leur filtre par défaut
+	//console.log(agency_id);
+	
+	console.log(region_map);
+	
+	toggleDiv('region_list_result');
+	
+	htmlRender = '';
+	htmlRender = htmlRender 
+		+ '<div class = "speciality_list" id = "speciality_list" style="cursor: pointer;" onclick = "toggleDiv(\'speciality_list_result\');">Choisir les spécialités'
+		+ '</div>'
+		+ '<div class = "speciality_list_result" id = "speciality_list_result">'
+		+ '</div>'
+		;
+	
+	document.getElementById("action_choix_specialite").innerHTML = htmlRender;
+	
+	
+    var url = host + "WebServices/MapRPPS/WS_Get_All_Speciality_List_For_Map.php";
+    console.log(url);
+    
+
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 2000;
+    xhr.onreadystatechange = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			console.log(response);
+			switch(response.status_message) {
+			default:
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+					+ '<tr>'
+						+ '<th>Information</th>'
+						+ '<th>Action</th>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information">' + response.status_message + '</td>'
+						+ '<td data-th="Action"></td>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information"></td>'
+						+ '<td data-th="Action">Relancer&nbsp;<img id="chooseSpecialityFullMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+					+ '</tr>'
+				+ '</table>';
+				$("#speciality_list_result").html(htmlResult).fadeIn();
+				$("#chooseSpecialityFullMap").click(function() {
+					chooseSpecialityMap(region_map, agency_id);
+				})
+				break;
+				case "data_speciality":
+					html_result = "Filtre sur les spécialités (" + response.data.length + ") : <br>";
+					
+					//Affichage liste, choix et mise à jour
+					//console.log(response.data);
+					
+					nb_row = 15;
+					
+					//arrondi à l'entier supérieur, ou garde la valeur si c'est un entier.
+					nb_col = Math.ceil(response.data.length / nb_row);
+					//console.log(response.data.length);
+					//console.log(nb_col);
+					
+
+
+					speciality_map = [];
+					htmlDetail = '<tr>';
+					htmlHeader = '';
+					htmlResult = '';
+					htmlLastRow = '';
+					is_checked = "checked"; //coché par défaut
+					
+					htmlSelectSpeciality = ''
+						+ '<form id = "speciality_list">';
+					
+					htmlResult = htmlResult
+						+ '<table class="rwd-table2">'
+
+					for (var i = 0; i < nb_row + 1; i++) { //+ 1 pour gérer la ligne d'entête
+						//console.log(i + ' ligne');
+						for (var j = 0; j < nb_col; j++) {
+							//console.log(j + ' colonne');
+							if (i == 0) {
+								//console.log('entête');
+								htmlHeader = htmlHeader
+									+ '<th>Spécialité</th>';
+
+								if (j == 0) {
+									htmlLastRow = htmlLastRow
+										+ '<td data-th="Spécialité">'
+										+ '<input type = "checkbox" name = "speciality_all" value = "'
+										+ 'speciality_all'
+										+ '" '
+										+ 'id = "'
+										+ 'speciality_all'
+										+ '" '
+										+ ''
+										+ ' onclick="'
+										+ 'speciality_map = updateFullMapOptionArraySelectAll(' + '\'' + 'speciality' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'all'
+										+ '">'
+										+ 'Toutes'
+										+ '</label>'
+									+ '</td>';
+								} else {
+									if (j == 1) {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Spécialité">'
+										+ '<input type = "checkbox" name = "speciality_none" value = "'
+										+ 'speciality_none'
+										+ '" '
+										+ 'id = "'
+										+ 'speciality_none'
+										+ '" '
+										+ '' //is checked à vide par défaut
+										+ ' onclick="'
+										+ 'speciality_map = updateFullMapOptionArrayUnselectAll(' + '\'' + 'speciality' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'none'
+										+ '">'
+										+ 'Aucune'
+										+ '</label>'
+									+ '</td>';
+									}
+									else {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Spécialité"></td>';
+									}
+								}
+								
+
+							} 
+							else {
+								//console.log('detail');
+								/* ordre alpha en ligne*/
+								//if (((i - 1) * nb_col + j) <  response.data.length) {
+								//	libelle = response.data[(i - 1) * nb_col + j].Libelle_savoir_faire;
+								//}
+								//else {
+								//	libelle = '';
+								//}
+								/*ordre alpha en colonne*/
+								if ((j * nb_row + (i - 1)) <  response.data.length) {
+									libelle = response.data[(j * nb_row + (i - 1))].label;
+								}
+								else {
+									libelle = false;
+								}
+								
+								if (libelle) {
+									//console.log(libelle);
+									htmlDetail = htmlDetail
+										+ '<td data-th="Spécialité">'
+											+ '<input type = "checkbox" name = "speciality" value = "'
+											+ libelle
+											+ '" '
+											+ 'id = "'
+											+ libelle
+											+ '" '
+											+ is_checked
+											+ ' onclick="'
+											+ 'speciality_map = updateFullMapOptionArray(' + '\'' + 'speciality' + '\'' + ');">'
+											/*+ libelle*/
+											+ '<label for = "'
+											+ libelle
+											+ '">'
+											+ libelle
+											+ '</label>'
+										+ '</td>';
+										
+								}
+								
+							}
+						}
+						htmlDetail = htmlDetail
+							+ '<td data-th="Action"></td>'
+							+ '</tr>'
+							+ '<tr>';
+					}
+					
+					htmlHeader = 
+						'<tr>'
+						+ htmlHeader
+						+ '<th>Action</th>' 
+						+ '</tr>';
+					
+					htmlLastRow = htmlLastRow
+						+ '<td data-th="Action">Carte&nbsp<img id="chooseSpecialityFullMap" class = "img_in_table" style="cursor: pointer;" onclick="generateFullMap(region_map, speciality_map);" src="img/next_step.png"/></td>';
+					
+					//console.log(htmlHeader);
+					
+					htmlResult = htmlResult
+						+ htmlHeader
+						+ htmlDetail
+						+ htmlLastRow
+						+ '</table>';
+					
+					htmlSelectSpeciality = htmlSelectSpeciality
+						+ htmlResult
+						+ '</form>';
+						
+
+						
+					//console.log(htmlSelectSpeciality);
+
+					//$("#action_choix_specialites").html(html_result).fadeIn();
+					$("#speciality_list_result").html(htmlSelectSpeciality).fadeIn();
+					
+					speciality_map = updateFullMapOptionArray('speciality'); //pour avoir un tableau rempli dès le premier passage
+					
+					break;
+			}
+        }
+    };
+    xhr.ontimeout = function () {
+		htmlResult = ''
+			+ '<table class="rwd-table">'
+			+ '<tr>'
+				+ '<th>Information</th>'
+				+ '<th>Action</th>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information">' + response.status_message + '</td>'
+				+ '<td data-th="Action"></td>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information"></td>'
+				+ '<td data-th="Action">Relancer&nbsp;<img id="chooseSpecialityFullMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+			+ '</tr>'
+		+ '</table>';
+		$("#speciality_list_result").html(htmlResult).fadeIn();
+		$("#chooseSpecialityFullMap").click(function() {
+			chooseSpecialityFullMap(region_map);
+		})
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
+function generateFullMap(region_map, speciality_map) { //avec pondération ; OK Uxxx
+	//console.log('entrée generateMapv4');
+	//réécrire en classe
+	
+	toggleDiv('speciality_list_result');
+	
+	region_map_json = JSON.stringify(region_map);
+	region_map_uri = encodeURIComponent(region_map_json);
+	
+	speciality_map_json = JSON.stringify(speciality_map);
+	speciality_map_uri = encodeURIComponent(speciality_map_json);
+	
+	//console.log(region_map_uri);
+	console.log(speciality_map_uri);
+	
+	htmlRender = '<div id="map"><img src="img/loading_full.gif"></div>';
+	document.getElementById("map_render").innerHTML = htmlRender;
+	
+	
+	
+    var url = host + "WebServices/MapRPPS/WS_Get_Map_RPPS_Data_full.php?region_map=" + region_map_uri + '&speciality_map=' + speciality_map_uri; 
+    console.log(url);
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 240000;
+    xhr.onreadystatechange = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			console.log(response);
+			switch(response.status_message) {
+				default:
+					$("#alert_recup_donnees_carto").html(response.status_message).fadeIn();
+				case "error_getting_geo_data_for_map":
+					$("#alert_recup_donnees_carto").html("Impossible de récupérer les données pour la carte : " + response.status_message).fadeIn();
+					break;
+				case "no_data_for_map_creation":
+					$("#alert_recup_donnees_carto").html("Aucune donnée localisée : " + response.status_message).fadeIn();
+					break;
+				case "no_details_for_map_creation":
+					$("#alert_recup_donnees_carto").html("Aucune donnée localisée : " + response.status_message).fadeIn();
+					break;
+				case "error_getting_color_data_for_map":
+					$("#alert_recup_donnees_carto").html("Impossible de récupérer les données pour la carte : " + response.status_message).fadeIn();
+					break;
+				case "no_color_array":
+					$("#alert_recup_donnees_carto").html("Aucune donnée couleur : " + response.status_message).fadeIn();
+					break;
+				case "data_for_map_creation":
+					//console.log('appel v4');
+					$("#alert_recup_donnees_carto").html("").fadeIn();
+					htmlRender = '<div id="map"><img src="img/loading_full.gif"></div>';
+					document.getElementById("map_render").innerHTML = htmlRender;
+					displayFullMap(response.data, region_map);
+				break;	
+        }
+    };
+    }
+    xhr.ontimeout = function () {
+    	$("#alert_recup_donnees_carto").html("fatal_error_connect_database");
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
+function displayFullMap(data, region_map) { //OK Uxxx (pas de boucle sur région), Uxxx n'a qu'une table avec la clé region_id plutôt qu'une table par région
+	//https://github.com/akq/Leaflet.DonutCluster/blob/master/README.md
+	console.log(data);
+	//console.log(region_map);
+	//console.log(region_map.length);
+	//console.log(data.color);
+	var dictOrder = [];
+	for (var i = 0; i < data.order.length; i++) {
+		dictOrder[i] = data.order[i].display_order;
+	}
+	
+
+	//console.log(dictOrder);
+	var dictTitle = data.title.reduce((map, obj) => (map[obj.display_order] = obj.name, map), {});
+	//console.log(dictTitle);
+	var dictColor = data.color.reduce((map, obj) => (map[obj.display_order] = obj.color, map), {});
+	//console.log(dictColor);
+	
+	//si on veut modifier :
+		// - la taille du cercle central : dans Leaflet.DonutCluser.js, ligne 302
+		// - la formule de calcul de la taille du donut : dans Leaflet.DonutCluser.js, ligne 303
+	var markers = L.DonutCluster({
+        chunkedLoading: true
+    }, {
+        key: 'type', //évo 1 : permet de regrouper par display_order et plus par nom, ce qui revient au même puisqu'on a un nom = un display_order, mais qui permet d'afficher les noms sur les points
+        sumField: 'value'
+        , order: dictOrder
+        , title: dictTitle
+        , arcColorDict: dictColor
+    })
+	
+	var types = dictOrder;
+	var points = [];
+	
+
+	//console.log(data.geo[region_map[i]].length);
+	for (var j = 0; j < data.geo.length; j++) {
+		
+		var w = data.geo[j].weight;
+		var pIcon = L.icon({
+		    iconUrl: 		host +  'Img/' + data.geo[j].color.substr(1, 6) + '.png', //on supprime les # à cause du routeur
+		    iconSize:     	[w > 0 ? 12 + Math.sqrt(w) : 0, w > 0 ? 12 + Math.sqrt(w) : 0], // size of the icon, icone carrée, 2 fois les mêmes dimensions
+		    iconAnchor:   	[0, 0], // point of the icon which will correspond to marker's location
+		    popupAnchor:  	[0, -5] // point from which the popup should open relative to the iconAnchor
+		});
+
+		var lat = data.geo[j].y;
+		var long = data.geo[j].x;
+		var type = data.geo[j].display_order;
+		var title = data.geo[j].speciality  + ' : ' + parseInt(data.geo[j].weight);
+		var weight = parseInt(data.geo[j].weight);
+		var marker = L.marker(L.latLng(lat, long), {
+			icon: pIcon,
+			type: type,
+			title: title,
+			value: weight
+		});
+		
+
+			
+		if (w > 0) {
+			var arrayCurrentUser = [];
+			
+			//users = users.filter(obj => obj.name == filter.name && obj.address == filter.address)
+			arrayCurrentUser = data.detail_geo.filter(obj => obj.code_commune == data.geo[j].code_commune && obj.display_order == data.geo[j].display_order);
+			//console.log(arrayCurrentUser);
+			//console.log(arrayCurrentUser.length);
+			
+			var htmlPopup = '';
+			var htmlDetailPopup = '';
+			/**/
+			htmlPopup = htmlPopup
+				//+ '<label style="color:blue; text-align:center; font-weight: bold;">' + data.geo[j].commune + '</label>'
+				+ '<table>'
+					+ '<tr>'
+						+ '<td colspan="2" style="color:blue; text-align:center; font-weight: bold;">'
+						+ data.geo[j].commune
+						+ '</td>'
+					+ '<tr>'
+						+ '<th>Spécialité</th>'
+						+ '<th>Nombre</th>'
+					+ '</tr>';
+			
+
+			for(var k = 0; k < arrayCurrentUser.length; k++) {
+				htmlDetailPopup = htmlDetailPopup
+				+ '<tr>'
+					+ '<td>' + arrayCurrentUser[k].speciality + '</td>'
+					+ '<td>' + arrayCurrentUser[k].nb_spec_by_sp + '</td>'
+				+ '</tr>';	
+			}
+			
+
+			htmlPopup = htmlPopup
+				+ htmlDetailPopup
+				+ '</table>';
+
+			
+			marker.bindPopup(htmlPopup);
+
+		}
+		else {
+			marker.bindPopup(title);
+		}
+
+	    markers.addLayer(marker);
+	    
+	}
+
+	htmlRender = '<div id="map"></div>';
+	document.getElementById("map_render").innerHTML = htmlRender;
+
+    var map = L.map('map'); //.setView([40.0484, 116.286976], 3);
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
+    map.addLayer(markers);
+
+	console.log(markers.getBounds());
+	
+    map.fitBounds(markers.getBounds());
+    renderFullLegend(data.title);
+}
+
+function hexToRGBFull(hex, alpha) { //OK Uxxx, gère la transparence sur la légende
+    var r = parseInt(hex.slice(1, 3), 16),
+        g = parseInt(hex.slice(3, 5), 16),
+        b = parseInt(hex.slice(5, 7), 16);
+
+    if (alpha) {
+        return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+    } else {
+        return "rgb(" + r + ", " + g + ", " + b + ")";
+    }
+}
+
+function renderFullLegend(dataLegend) { //OK Uxxx
+	
+	if (element = document.getElementById("legend")) 
+	{
+		element.parentNode.removeChild(element);
+	};
+	
+	htmlResult = ''
+		+ '<div id = "legend">Spécialité';
+	
+	htmlResultDetail = '';
+	
+	for (var i = 0; i < dataLegend.length; i++) {
+		htmlResultDetail = htmlResultDetail
+			+ '<div class = "category-' + dataLegend[i].display_order + ' legenditem" style = "border-right-width: 12px; border-right-style: solid; border-right-color: ' + hexToRGBFull(dataLegend[i].color, 0.7) + '">'
+			+ dataLegend[i].name
+			+ '</div>';
+	}
+	
+	htmlResult = htmlResult 
+		+ htmlResultDetail
+		+ '</div>';
+    
+    
+    //console.log(htmlResult);
+    $('body').append(htmlResult);
+    setMovableFullLegend("legend");
+}
+
+function setMovableFullLegend(divId) { //OK Uxxx
+	var dragItem = document.querySelector("#" + divId);
+	var container = document.querySelector("#" + divId);
+	
+	var active = false;
+	var currentX;
+	var currentY;
+	var initialX;
+	var initialY;
+	var xOffset = 0;
+	var yOffset = 0;
+	
+	container.addEventListener("touchstart", dragStart, false);
+	container.addEventListener("touchend", dragEnd, false);
+	container.addEventListener("touchmove", drag, false);
+
+	container.addEventListener("mousedown", dragStart, false);
+	container.addEventListener("mouseup", dragEnd, false);
+	container.addEventListener("mousemove", drag, false);
+	
+	function dragStart(e) 
+	{
+      if (e.type === "touchstart") {
+        initialX = e.touches[0].clientX - xOffset;
+        initialY = e.touches[0].clientY - yOffset;
+      } else {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+      }
+
+      if (e.target === dragItem) {
+        active = true;
+      }
+    }
+
+    function dragEnd(e) 
+    {
+      initialX = currentX;
+      initialY = currentY;
+
+      active = false;
+    }
+
+    function drag(e) 
+    {
+      if (active) {
+      
+        e.preventDefault();
+      
+        if (e.type === "touchmove") {
+          currentX = e.touches[0].clientX - initialX;
+          currentY = e.touches[0].clientY - initialY;
+        } else {
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        setTranslate(currentX, currentY, dragItem);
+      }
+    }
+
+    function setTranslate(xPos, yPos, el) 
+    {
+      el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+    }
+}
+
+
+
+
+//Fin carte global
+
+
+
+
+
 
 //FIN Cartographie
 

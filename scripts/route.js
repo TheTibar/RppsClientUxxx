@@ -93,6 +93,16 @@ function router() {
 				};
 				viewSalesProPage();
 			}).resolve();
+	
+	router.on(
+			'Carte_Complete', function () {
+				if (element = document.getElementById("legend")) 
+				{
+					element.parentNode.removeChild(element);
+				};
+				initFullMapPage();
+			}).resolve();
+	
 
 	router.notFound(function () {
         window.alert("Router Not found");
