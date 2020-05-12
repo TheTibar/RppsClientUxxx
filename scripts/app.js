@@ -4120,10 +4120,618 @@ function setMovableFullLegend(divId) { //OK Uxxx
 
 //Fin carte global
 
+//Début carte heatmap
+
+function initHeatMapPage() { //OK Uxxx
+	if (alreadyConnected()) 
+	{ //à mettre au début de chaque fonction Page
+		if (! document.getElementById("#content") || ! document.getElementById("#left_menu")) {
+			populateApp();
+		}
+		var htmlRender = ''
+			+ '<div class="action" id="action_choix_region"></div>'
+			+ '<div class="action" id="action_choix_specialite"></div>'
+			+ '<div id="map_render"></div>'
+			+ '<div class="alert" id="alert_recup_donnees_carto"></div>';
+		document.getElementById("content").innerHTML = htmlRender;
+		//generateMapv4();
+		chooseRegionHeatMap();
+	}
+	else
+	{
+		router.navigate('');
+	}
+}
+
+function chooseRegionHeatMap() { //OK Uxxx
+	//Récupération de la liste des spécialités et de leur filtre par défaut
+	//console.log(agency_id);
+	
+	htmlRender = '';
+	htmlRender = htmlRender 
+		+ '<div class = "region_list" id = "region_list" style="cursor: pointer;" onclick = "toggleDiv(\'region_list_result\');">Choisir les régions'
+		+ '</div>'
+		+ '<div class = "region_list_result" id = "region_list_result">'
+		+ '</div>'
+		;
+	
+	document.getElementById("action_choix_region").innerHTML = htmlRender;
+	
+	
+    var url = host + "WebServices/MapRPPS/WS_Get_All_Region_List_For_Map.php";
+    console.log(url);
+    
+
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 2000;
+    xhr.onreadystatechange = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			console.log(response);
+			switch(response.status_message) {
+			default:
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+					+ '<tr>'
+						+ '<th>Information</th>'
+						+ '<th>Action</th>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information">' + response.status_message + '</td>'
+						+ '<td data-th="Action"></td>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information"></td>'
+						+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegionHeatMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+					+ '</tr>'
+				+ '</table>';
+				$("#region_list_result").html(htmlResult).fadeIn();
+				$("#chooseRegionHeatMap").click(function() {
+					chooseRegionFullMap();
+				})
+				break;
+				case "data_region":
+					html_result = "Filtre sur les régions (" + response.data.length + ") : <br>";
+					
+					//Affichage liste, choix et mise à jour
+					//console.log(response.data);
+					
+					nb_row = 15;
+					
+					//arrondi à l'entier supérieur, ou garde la valeur si c'est un entier.
+					nb_col = Math.ceil(response.data.length / nb_row);
+					//console.log(response.data.length);
+					//console.log(nb_col);
+					
+
+
+					region_map = [];
+					htmlDetail = '<tr>';
+					htmlHeader = '';
+					htmlResult = '';
+					htmlLastRow = '';
+					is_checked = "checked"; //coché par défaut
+					
+					htmlSelectRegion = ''
+						+ '<form id = "region_list">';
+					
+					htmlResult = htmlResult
+						+ '<table class="rwd-table2">'
+
+					for (var i = 0; i < nb_row + 1; i++) { //+ 1 pour gérer la ligne d'entête
+						//console.log(i + ' ligne');
+						for (var j = 0; j < nb_col; j++) {
+							//console.log(j + ' colonne');
+							if (i == 0) {
+								//console.log('entête');
+								htmlHeader = htmlHeader
+									+ '<th>Région</th>';
+
+								if (j == 0) {
+									htmlLastRow = htmlLastRow
+										+ '<td data-th="Région">'
+										+ '<input type = "checkbox" name = "region_all" value = "'
+										+ 'region_all'
+										+ '" '
+										+ 'id = "'
+										+ 'region_all'
+										+ '" '
+										+ ''
+										+ ' onclick="'
+										+ 'region_map = updateFullMapOptionArraySelectAll(' + '\'' + 'region' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'all'
+										+ '">'
+										+ 'Toutes'
+										+ '</label>'
+									+ '</td>';
+								} else {
+									if (j == 1) {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Région">'
+										+ '<input type = "checkbox" name = "region_none" value = "'
+										+ 'region_none'
+										+ '" '
+										+ 'id = "'
+										+ 'region_none'
+										+ '" '
+										+ '' //is checked à vide par défaut
+										+ ' onclick="'
+										+ 'region_map = updateFullMapOptionArrayUnselectAll(' + '\'' + 'region' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'none'
+										+ '">'
+										+ 'Aucune'
+										+ '</label>'
+									+ '</td>';
+									}
+									else {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Région"></td>';
+									}
+								}
+								
+
+							} 
+							else {
+								//console.log('detail');
+								/* ordre alpha en ligne*/
+								//if (((i - 1) * nb_col + j) <  response.data.length) {
+								//	libelle = response.data[(i - 1) * nb_col + j].Libelle_savoir_faire;
+								//}
+								//else {
+								//	libelle = '';
+								//}
+								/*ordre alpha en colonne*/
+								if ((j * nb_row + (i - 1)) <  response.data.length) {
+									libelle = response.data[(j * nb_row + (i - 1))].label;
+									region_id = response.data[(j * nb_row + (i - 1))].region_id;
+								}
+								else {
+									libelle = false;
+								}
+								
+								if (libelle) {
+									//console.log(libelle);
+									htmlDetail = htmlDetail
+										+ '<td data-th="Région">'
+											+ '<input type = "checkbox" name = "region" value = "'
+											+ libelle
+											+ '" '
+											+ 'id = "'
+											+ region_id
+											+ '" '
+											+ is_checked
+											+ ' onclick="'
+											+ 'region_map = updateFullMapOptionArray(' + '\'' + 'region' + '\'' + ');">'
+											/*+ libelle*/
+											+ '<label for = "'
+											+ libelle
+											+ '">'
+											+ libelle
+											+ '</label>'
+										+ '</td>';
+										
+								}
+								
+							}
+						}
+						htmlDetail = htmlDetail
+							+ '<td data-th="Action"></td>'
+							+ '</tr>'
+							+ '<tr>';
+					}
+					
+					htmlHeader = 
+						'<tr>'
+						+ htmlHeader
+						+ '<th>Action</th>' 
+						+ '</tr>';
+					
+					htmlLastRow = htmlLastRow
+						+ '<td data-th="Action">Spécialités&nbsp<img id="chooseRegionFullMap" img class = "img_in_table" style="cursor: pointer;" onclick="chooseSpecialityHeatMap(region_map);" src="img/next_step.png"/></td>';
+					
+					//console.log(htmlHeader);
+					
+					htmlResult = htmlResult
+						+ htmlHeader
+						+ htmlDetail
+						+ htmlLastRow
+						+ '</table>';
+					
+					htmlSelectRegion = htmlSelectRegion
+						+ htmlResult
+						+ '</form>';
+						
+
+						
+					//console.log(htmlSelectSpeciality);
+
+					//$("#action_choix_specialites").html(html_result).fadeIn();
+					$("#region_list_result").html(htmlSelectRegion).fadeIn();
+					
+					region_map = updateFullMapOptionArray('region'); //pour avoir un tableau rempli dès le premier passage
+					
+					break;
+			}
+        }
+    };
+    xhr.ontimeout = function () {
+		htmlResult = ''
+			+ '<table class="rwd-table">'
+			+ '<tr>'
+				+ '<th>Information</th>'
+				+ '<th>Action</th>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information">' + response.status_message + '</td>'
+				+ '<td data-th="Action"></td>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information"></td>'
+				+ '<td data-th="Action">Relancer&nbsp;<img id="chooseRegionHeatMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+			+ '</tr>'
+		+ '</table>';
+		$("#region_list_result").html(htmlResult).fadeIn();
+		$("#chooseRegionHeatMap").click(function() {
+			chooseRegionHeatMap();
+		})
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
+function chooseSpecialityHeatMap(region_map) { //OK Uxxx
+	//Récupération de la liste des spécialités et de leur filtre par défaut
+	//console.log(agency_id);
+	
+	console.log(region_map);
+	
+	toggleDiv('region_list_result');
+	
+	htmlRender = '';
+	htmlRender = htmlRender 
+		+ '<div class = "speciality_list" id = "speciality_list" style="cursor: pointer;" onclick = "toggleDiv(\'speciality_list_result\');">Choisir les spécialités'
+		+ '</div>'
+		+ '<div class = "speciality_list_result" id = "speciality_list_result">'
+		+ '</div>'
+		;
+	
+	document.getElementById("action_choix_specialite").innerHTML = htmlRender;
+	
+	
+    var url = host + "WebServices/MapRPPS/WS_Get_All_Speciality_List_For_Map.php";
+    console.log(url);
+    
+
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 2000;
+    xhr.onreadystatechange = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			console.log(response);
+			switch(response.status_message) {
+			default:
+				htmlResult = ''
+					+ '<table class="rwd-table">'
+					+ '<tr>'
+						+ '<th>Information</th>'
+						+ '<th>Action</th>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information">' + response.status_message + '</td>'
+						+ '<td data-th="Action"></td>'
+					+ '</tr>'
+					+ '<tr>'
+						+ '<td data-th="Information"></td>'
+						+ '<td data-th="Action">Relancer&nbsp;<img id="chooseSpecialityHeatMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+					+ '</tr>'
+				+ '</table>';
+				$("#speciality_list_result").html(htmlResult).fadeIn();
+				$("#chooseSpecialityHeatMap").click(function() {
+					chooseSpecialityMap(region_map, agency_id);
+				})
+				break;
+				case "data_speciality":
+					html_result = "Filtre sur les spécialités (" + response.data.length + ") : <br>";
+					
+					//Affichage liste, choix et mise à jour
+					//console.log(response.data);
+					
+					nb_row = 15;
+					
+					//arrondi à l'entier supérieur, ou garde la valeur si c'est un entier.
+					nb_col = Math.ceil(response.data.length / nb_row);
+					//console.log(response.data.length);
+					//console.log(nb_col);
+					
+
+
+					speciality_map = [];
+					htmlDetail = '<tr>';
+					htmlHeader = '';
+					htmlResult = '';
+					htmlLastRow = '';
+					is_checked = "checked"; //coché par défaut
+					
+					htmlSelectSpeciality = ''
+						+ '<form id = "speciality_list">';
+					
+					htmlResult = htmlResult
+						+ '<table class="rwd-table2">'
+
+					for (var i = 0; i < nb_row + 1; i++) { //+ 1 pour gérer la ligne d'entête
+						//console.log(i + ' ligne');
+						for (var j = 0; j < nb_col; j++) {
+							//console.log(j + ' colonne');
+							if (i == 0) {
+								//console.log('entête');
+								htmlHeader = htmlHeader
+									+ '<th>Spécialité</th>';
+
+								if (j == 0) {
+									htmlLastRow = htmlLastRow
+										+ '<td data-th="Spécialité">'
+										+ '<input type = "checkbox" name = "speciality_all" value = "'
+										+ 'speciality_all'
+										+ '" '
+										+ 'id = "'
+										+ 'speciality_all'
+										+ '" '
+										+ ''
+										+ ' onclick="'
+										+ 'speciality_map = updateFullMapOptionArraySelectAll(' + '\'' + 'speciality' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'all'
+										+ '">'
+										+ 'Toutes'
+										+ '</label>'
+									+ '</td>';
+								} else {
+									if (j == 1) {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Spécialité">'
+										+ '<input type = "checkbox" name = "speciality_none" value = "'
+										+ 'speciality_none'
+										+ '" '
+										+ 'id = "'
+										+ 'speciality_none'
+										+ '" '
+										+ '' //is checked à vide par défaut
+										+ ' onclick="'
+										+ 'speciality_map = updateFullMapOptionArrayUnselectAll(' + '\'' + 'speciality' + '\'' + ');">'
+										/*+ libelle*/
+										+ '<label for = "'
+										+ 'none'
+										+ '">'
+										+ 'Aucune'
+										+ '</label>'
+									+ '</td>';
+									}
+									else {
+										htmlLastRow = htmlLastRow
+										+ '<td data-th="Spécialité"></td>';
+									}
+								}
+								
+
+							} 
+							else {
+								//console.log('detail');
+								/* ordre alpha en ligne*/
+								//if (((i - 1) * nb_col + j) <  response.data.length) {
+								//	libelle = response.data[(i - 1) * nb_col + j].Libelle_savoir_faire;
+								//}
+								//else {
+								//	libelle = '';
+								//}
+								/*ordre alpha en colonne*/
+								if ((j * nb_row + (i - 1)) <  response.data.length) {
+									libelle = response.data[(j * nb_row + (i - 1))].label;
+								}
+								else {
+									libelle = false;
+								}
+								
+								if (libelle) {
+									//console.log(libelle);
+									htmlDetail = htmlDetail
+										+ '<td data-th="Spécialité">'
+											+ '<input type = "checkbox" name = "speciality" value = "'
+											+ libelle
+											+ '" '
+											+ 'id = "'
+											+ libelle
+											+ '" '
+											+ is_checked
+											+ ' onclick="'
+											+ 'speciality_map = updateFullMapOptionArray(' + '\'' + 'speciality' + '\'' + ');">'
+											/*+ libelle*/
+											+ '<label for = "'
+											+ libelle
+											+ '">'
+											+ libelle
+											+ '</label>'
+										+ '</td>';
+										
+								}
+								
+							}
+						}
+						htmlDetail = htmlDetail
+							+ '<td data-th="Action"></td>'
+							+ '</tr>'
+							+ '<tr>';
+					}
+					
+					htmlHeader = 
+						'<tr>'
+						+ htmlHeader
+						+ '<th>Action</th>' 
+						+ '</tr>';
+					
+					htmlLastRow = htmlLastRow
+						+ '<td data-th="Action">Carte&nbsp<img id="chooseSpecialityHeatMap" class = "img_in_table" style="cursor: pointer;" onclick="generateHeatMap(region_map, speciality_map);" src="img/next_step.png"/></td>';
+					
+					//console.log(htmlHeader);
+					
+					htmlResult = htmlResult
+						+ htmlHeader
+						+ htmlDetail
+						+ htmlLastRow
+						+ '</table>';
+					
+					htmlSelectSpeciality = htmlSelectSpeciality
+						+ htmlResult
+						+ '</form>';
+						
+
+						
+					//console.log(htmlSelectSpeciality);
+
+					//$("#action_choix_specialites").html(html_result).fadeIn();
+					$("#speciality_list_result").html(htmlSelectSpeciality).fadeIn();
+					
+					speciality_map = updateFullMapOptionArray('speciality'); //pour avoir un tableau rempli dès le premier passage
+					
+					break;
+			}
+        }
+    };
+    xhr.ontimeout = function () {
+		htmlResult = ''
+			+ '<table class="rwd-table">'
+			+ '<tr>'
+				+ '<th>Information</th>'
+				+ '<th>Action</th>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information">' + response.status_message + '</td>'
+				+ '<td data-th="Action"></td>'
+			+ '</tr>'
+			+ '<tr>'
+				+ '<td data-th="Information"></td>'
+				+ '<td data-th="Action">Relancer&nbsp;<img id="chooseSpecialityHeatMap" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
+			+ '</tr>'
+		+ '</table>';
+		$("#speciality_list_result").html(htmlResult).fadeIn();
+		$("#chooseSpecialityHeatMap").click(function() {
+			chooseSpecialityHeatMap(region_map);
+		})
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
+function generateHeatMap(region_map, speciality_map) { //avec pondération ; OK Uxxx
+	//console.log('entrée generateMapv4');
+	//réécrire en classe
+	
+	toggleDiv('speciality_list_result');
+	
+	region_map_json = JSON.stringify(region_map);
+	region_map_uri = encodeURIComponent(region_map_json);
+	
+	speciality_map_json = JSON.stringify(speciality_map);
+	speciality_map_uri = encodeURIComponent(speciality_map_json);
+	
+	//console.log(region_map_uri);
+	console.log(speciality_map_uri);
+	
+	htmlRender = '<div id="map"><img src="img/loading_full.gif"></div>';
+	document.getElementById("map_render").innerHTML = htmlRender;
+	
+	
+	
+    var url = host + "WebServices/MapRPPS/WS_Get_Map_RPPS_Data_full.php?region_map=" + region_map_uri + '&speciality_map=' + speciality_map_uri; 
+    console.log(url);
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 240000;
+    xhr.onreadystatechange = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			console.log(response);
+			switch(response.status_message) {
+				default:
+					$("#alert_recup_donnees_carto").html(response.status_message).fadeIn();
+				case "error_getting_geo_data_for_map":
+					$("#alert_recup_donnees_carto").html("Impossible de récupérer les données pour la carte : " + response.status_message).fadeIn();
+					break;
+				case "no_data_for_map_creation":
+					$("#alert_recup_donnees_carto").html("Aucune donnée localisée : " + response.status_message).fadeIn();
+					break;
+				case "no_details_for_map_creation":
+					$("#alert_recup_donnees_carto").html("Aucune donnée localisée : " + response.status_message).fadeIn();
+					break;
+				case "error_getting_color_data_for_map":
+					$("#alert_recup_donnees_carto").html("Impossible de récupérer les données pour la carte : " + response.status_message).fadeIn();
+					break;
+				case "no_color_array":
+					$("#alert_recup_donnees_carto").html("Aucune donnée couleur : " + response.status_message).fadeIn();
+					break;
+				case "data_for_map_creation":
+					//console.log('appel v4');
+					$("#alert_recup_donnees_carto").html("").fadeIn();
+					htmlRender = '<div id="map"><img src="img/loading_full.gif"></div>';
+					document.getElementById("map_render").innerHTML = htmlRender;
+					displayHeatMap(response.data, region_map);
+				break;	
+        }
+    };
+    }
+    xhr.ontimeout = function () {
+    	$("#alert_recup_donnees_carto").html("fatal_error_connect_database");
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+}
+
+function displayHeatMap(data, region_map) { //OK Uxxx (pas de boucle sur région), Uxxx n'a qu'une table avec la clé region_id plutôt qu'une table par région
+	//https://github.com/akq/Leaflet.DonutCluster/blob/master/README.md
+
+	
+	var map = L.map('map');
+	
+	
+	L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
+
+	map.setZoom(12);
+	
+    heatData = [];
+    heatDataArr = [];
+    heatDataLatLong = [];
+	
+	
+	for (var j = 0; j < data.geo.length; j++) {
+		var lt = parseFloat(data.geo[j].y);
+		var lg = parseFloat(data.geo[j].x);
+		var w = parseInt(data.geo[j].weight);
+		
+		heatData[j] = [lt, lg, w];
+		heatDataLatLong[j] = [lt, lg];
+		heatDataArr[j] = w;
+	}
+	
+	var intensity = Math.max(heatDataArr);
+	
+	console.log(heatData);
+	
+	var heat = L.heatLayer(heatData, { radius: 10, max:Math.sqrt(intensity) });
+    map.addLayer(heat);
+    
+    map.fitBounds(heatDataLatLong);
+
+}
 
 
 
-
+//Fin carte heatmap
 
 //FIN Cartographie
 
@@ -4197,149 +4805,6 @@ function currentUserAgencySelectCU() { //OK Uxxx
 		+ '</table>';
 	$("#agency_list_result").html(htmlResult).fadeIn();
 }
-/*
-function getAgencySalesProCU(agency_token) { //OK Uxxx
-	
-	agency_token_uri = encodeURIComponent(agency_token);
-	user_token_uri = encodeURIComponent(user_token);
-	
-	htmlRender = '';
-	htmlRender = htmlRender 
-		+ '<div class = "agency_sales_pro" id = "agency_sales_pro" style="cursor: pointer;" onclick = "toggleDiv(\'agency_sales_pro_result\');">Liste des commerciaux'
-		+ '</div>'
-		+ '<div class = "agency_sales_pro_result" id = "agency_sales_pro_result">'
-		+ '</div>'
-		;
-	
-	document.getElementById("action_comm_agence").innerHTML = htmlRender;
-	
-    var url = host + "WebServices/Agency/WS_Get_Sales_Pro_By_Agency.php?agency_token=" + agency_token_uri + "&user_token=" + user_token_uri;
-    console.log(url);
-
-
-    var xhr = new XMLHttpRequest();
-    xhr.timeout = 2000;
-    xhr.onload = function (e) {
-        if (xhr.readyState === 4) {
-			//console.log(xhr);
-			var response = JSON.parse(xhr.responseText);
-			//console.log(response);
-			switch(response.status_message) {
-			case "fatal_error_agency_id":
-        		logout();
-        		break;
-			default:
-				htmlResult = ''
-					+ '<table class="rwd-table">'
-					+ '<tr>'
-						+ '<th>Information</th>'
-						+ '<th>Action</th>'
-					+ '</tr>'
-					+ '<tr>'
-						+ '<td data-th="Information">' + response.status_message + '</td>'
-						+ '<td data-th="Action"></td>'
-					+ '</tr>'
-					+ '<tr>'
-						+ '<td data-th="Information"></td>'
-						+ '<td data-th="Action">Relancer&nbsp;<img id="getAgencySalesProCU" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
-					+ '</tr>'
-				+ '</table>';
-				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-				$("#getAgencySalesProCU").click(function() {
-					getAgencySalesProCU(agency_token);
-				})
-				break;
-			case "no_agency_sales_pro":
-				htmlResult = ''
-					+ '<table class="rwd-table">'
-						+ '<tr>'
-							+ '<th>Information</th>'
-							+ '<th>Action</th>'
-						+ '</tr>'
-						+ '<tr>'
-							+ '<td data-th="Information">' + response.status_message + '</td>'
-							+ '<td data-th="Action"></td>'
-						+ '</tr>'
-						+ '<tr>'
-							+ '<td data-th="Information"></td>'
-							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProCU" title="Créer" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
-						+ '</tr>'
-					+ '</table>';
-				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-				$("#getAgencySalesProCU").click(function() {
-					//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
-					createSalesProFormInput(agency_token);
-				})
-				break;
-			case "agency_sales_pro":
-				htmlResult = ''
-					+ '<table class="rwd-table">'
-						+ '<tr>'
-							+ '<th>Nom</th>'
-							+ '<th>Prénom</th>'
-							+ '<th>Email</th>'
-							+ '<th>Région</th>'
-							+ '<th>Couleur carte</th>'
-							+ '<th>Action</th>'
-						+ '</tr>';
-				htmlResultDetail = '';
-				for (var i = 0; i < response.data.length; i++) {
-					htmlResultDetail = htmlResultDetail 
-						+ '<tr>'
-							+ '<td data-th="Nom">' + response.data[i]['last_name'] + '</td>' 
-							+ '<td data-th="Prénom">' + response.data[i]['first_name'] + '</td>'
-							+ '<td data-th="Email">' + response.data[i]['email'] + '</td>'
-							+ '<td data-th="Région">' + capitalizeWords(response.data[i]['region']) + '</td>'
-							+ '<td data-th="Couleur carte" bgcolor = ' + response.data[i]['color'] + '></td>'
-							+ '<td data-th="Action"></td>'
-						+ '</tr>';
-				}
-				htmlResult = htmlResult 
-					+ htmlResultDetail
-						+ '<tr>'
-							+ '<td data-th="Nom"></td>'
-							+ '<td data-th="Prénom"></td>'
-							+ '<td data-th="Email"></td>'
-							+ '<td data-th="Région"></td>'
-							+ '<td data-th="Couleur carte"></td>'
-							+ '<td data-th="Action">Créer&nbsp;<img id = "getAgencySalesProCU" title="Vérifier" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
-						+ '</tr>'
-					+ '</table>';
-				$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-				$("#getAgencySalesProCU").click(function() {
-					//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
-					createSalesProFormInput(agency_token);
-				})
-				break;
-			}
-        }
-    };
-    xhr.ontimeout = function () {
-    	htmlResult = ''
-			+ '<table class="rwd-table">'
-				+ '<tr>'
-					+ '<th>Information</th>'
-					+ '<th>Action</th>'
-				+ '</tr>'
-				+ '<tr>'
-					+ '<td data-th="Information">Timeout</td>'
-					+ '<td data-th="Action"></td>'
-				+ '</tr>'
-				+ '<tr>'
-					+ '<td data-th="Information"></td>'
-					+ '<td data-th="Action">Relancer&nbsp;<img id = "getAgencySalesProCU" title="Relancer" class = "img_in_table" style="cursor: pointer;" src="img/retry.png"/></td>'
-				+ '</tr>'
-			+ '</table>';
-		$("#agency_sales_pro_result").html(htmlResult).fadeIn();
-		$("#getAgencySalesProCU").click(function() {
-			getAgencySalesProCU(agency_token);
-			//toggleDiv("agency_sales_pro_result"); on ne masque pas car on a besoin des couleurs
-		})
-    };
-    xhr.open("GET", url, true);
-    xhr.send();
-}
-*/
 
 function getAgencySalesProCU(agency_token) { //OK Uxxx
 	

@@ -103,6 +103,15 @@ function router() {
 				initFullMapPage();
 			}).resolve();
 	
+	router.on(
+			'Carte_Chaleur', function () {
+				if (element = document.getElementById("legend")) 
+				{
+					element.parentNode.removeChild(element);
+				};
+				initHeatMapPage();
+			}).resolve();
+	
 
 	router.notFound(function () {
         window.alert("Router Not found");
