@@ -5285,7 +5285,8 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 							+ '<th>Email</th>'
 							+ '<th>Région</th>'
 							+ '<th>Couleur carte</th>'
-							+ '<th>Action</th>'
+							//+ '<th>Action</th>'
+							+ '<th> </th>'
 						+ '</tr>';
 				htmlResultDetail = '';
 				for (var i = 0; i < response.data.agency_sales_pro.length; i++) {
@@ -5348,7 +5349,8 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 								+ 'border-radius:50%;width:20px;height:20px;margin:auto;">'
 							+ '</div>'
 							+ '</td>'
-							+ '<td data-th="Action">Modifier&nbsp;<img id = "getAgencySalesProMSP_' + response.data.agency_sales_pro[i]['user_id'] + '" title="Modifier" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+							// + '<td data-th="Action">Modifier&nbsp;<img id = "getAgencySalesProMSP_' + response.data.agency_sales_pro[i]['user_id'] + '" title="Modifier" class = "img_in_table" style="cursor: pointer;" src="img/next_step.png"/></td>'
+							 + '<td data-th="Action"></td>'
 						+ '</tr>';
 				}
 				htmlResult = htmlResult 
