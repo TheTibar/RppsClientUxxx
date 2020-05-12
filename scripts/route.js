@@ -86,7 +86,7 @@ function router() {
 			}).resolve();
 	
 	router.on(
-			'Visualiser_Commercial', function () {
+			'Visualiser_Commerciaux', function () {
 				if (element = document.getElementById("legend")) 
 				{
 					element.parentNode.removeChild(element);
