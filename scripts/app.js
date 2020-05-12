@@ -5145,7 +5145,7 @@ function saveNewDoctorsSalesProLink(region_id, doc) {
 
 
 //DEBUT Modifier commercial
-function modifySalesProPage() {
+function viewSalesProPage() {
 	if (alreadyConnected()) 
 	{ //à mettre au début de chaque fonction Page
 		if (! document.getElementById("#content") || ! document.getElementById("#left_menu")) {

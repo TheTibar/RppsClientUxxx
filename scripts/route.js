@@ -86,12 +86,12 @@ function router() {
 			}).resolve();
 	
 	router.on(
-			'Gerer_Commercial', function () {
+			'Visualiser_Commercial', function () {
 				if (element = document.getElementById("legend")) 
 				{
 					element.parentNode.removeChild(element);
 				};
-				modifySalesProPage();
+				viewSalesProPage();
 			}).resolve();
 
 	router.notFound(function () {
