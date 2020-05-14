@@ -4695,6 +4695,8 @@ function generateHeatMap(region_map, speciality_map) { //avec pondération ; OK 
 function displayHeatMap(data, region_map) { //OK Uxxx (pas de boucle sur région), Uxxx n'a qu'une table avec la clé region_id plutôt qu'une table par région
 	//https://github.com/akq/Leaflet.DonutCluster/blob/master/README.md
 
+	htmlRender = '<div id="map"></div>';
+	document.getElementById("map_render").innerHTML = htmlRender;
 	
 	var map = L.map('map');
 	
