@@ -46,7 +46,7 @@
     
     <!-- début basiques jquery, app, router, route -->
     <script type="text/javascript" src="src/jquery-3.3.1.js"></script>
-    <script type="text/javascript" src="scripts/app.js?v=6"></script>
+    <script type="text/javascript" src="scripts/app.js?v=8"></script>
     <script type="text/javascript" src="src/router.js"></script>
 
     <script type="text/javascript" src="scripts/route.js"></script>
@@ -77,6 +77,9 @@
 	<link rel="stylesheet" type="text/css" href="css/spectrum.min.css"/>
 	<!-- fin colorpicker -->
     
+    <!-- début fenêtre modale -->
+    <link rel="stylesheet" type="text/css" href="css/modal.css"/> 
+     <!-- fin fenêtre modale -->
     
     
     <title>Gestion RPPS</title>
@@ -109,6 +112,22 @@
 	<!--
 	<script type="text/javascript">renderMenu();</script>
 	-->
+	
+	<!-- 
+		ajout d'une modale
+	-->
+	<div id="myModal" class="modal">
+		<div class="modal-content">
+			<span class="close" onclick="closeModal();">&times;</span>
+			<div id="doctor_modal_listing" class="doctor_modal_listing">
+			</div>
+		</div>
+	</div>
+		<!-- 
+		fin ajout d'une modale
+	-->
+	
+	
 	<script type="text/javascript">router();</script>
 
 </body>

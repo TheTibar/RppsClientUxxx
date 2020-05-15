@@ -3111,7 +3111,7 @@ function displayMapv5(data, region_map) { //OK Uxxx (pas de boucle sur région),
 				//+ '<label style="color:blue; text-align:center; font-weight: bold;">' + data.geo[j].commune + '</label>'
 				+ '<table>'
 					+ '<tr>'
-						+ '<td colspan="2" style="color:blue; text-align:center; font-weight: bold;">'
+						+ '<td colspan="2" style="cursor: pointer; color:blue; text-align:center; font-weight: bold;">'
 						+ data.geo[j].commune
 						+ '</td>'
 					+ '<tr>'
@@ -3123,7 +3123,7 @@ function displayMapv5(data, region_map) { //OK Uxxx (pas de boucle sur région),
 			for(var k = 0; k < arrayCurrentUser.length; k++) {
 				htmlDetailPopup = htmlDetailPopup
 				+ '<tr>'
-					+ '<td>' + arrayCurrentUser[k].speciality + '</td>'
+					+ '<td style="cursor: pointer;" onclick="detailSpComVilModal(' + '\'' + arrayCurrentUser[k].speciality + '\'' + ', ' + data.geo[j].user_id + ', ' + data.geo[j].code_commune + ');">' + arrayCurrentUser[k].speciality + '</td>'
 					+ '<td>' + arrayCurrentUser[k].nb_spec_by_sp + '</td>'
 				+ '</tr>';	
 			}
@@ -6740,7 +6740,88 @@ function getAgencySalesProMSP(agency_token) { //OK Uxxx
 //FIN Agence
 
 
+function closeModal() {
+	var modal = document.getElementById("myModal");
+	modal.style.display = "none";
+}
 
+function detailSpComVilModal(speciality, user_id, code_commune) {
+	
+	
+	speciality_uri = encodeURIComponent(speciality);
+	user_id_uri = encodeURIComponent(user_id);
+	code_commune_uri = encodeURIComponent(code_commune);
+	
+	
+	
+	console.log(speciality);
+	console.log(user_id);
+	console.log(code_commune);
+	
+	
+	//var span = document.getElementsByClassName("close")[0];
+    var url = host + "WebServices/MapRPPS/WS_Get_Doctors_By_Sp_City_User_For_Modal.php?speciality=" + speciality_uri + '&user_id=' + user_id_uri + '&city_id=' + code_commune_uri; 
+    console.log(url);
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 5000;
+    xhr.onreadystatechange = function (e) {
+        if (xhr.readyState === 4) {
+			//console.log(xhr);
+			var response = JSON.parse(xhr.responseText);
+			
+			switch(response.status_message) {
+				default:
+					//TODO
+				case "data_doctors_sp_city_user":
+					console.log('WS_Get_Doctors_By_Sp_City_User_For_Modal.php');
+					console.log(response);
+					
+					var htmlResult = ''
+						+ '<table class="table_doctor_modal_listing">'
+						+ '<tr>'
+							+ '<th>Nom</th>'
+							+ '<th>Prénom</th>'
+							+ '<th>Identifiant</th>'
+						+ '</tr>';
+					for(var i = 0; i < response.data.length; i++) {
+						htmlResult = htmlResult 
+							+ '<tr>'
+								+ '<td>'
+									+ response.data[i].name
+								+ '</td>'
+								+ '<td>'
+									+ response.data[i].first_name
+								+ '</td>'
+								+ '<td>'
+									+ response.data[i].identifiant_pp
+								+ '</td>'
+							+ '</tr>'
+					}
+					
+					htmlResult = htmlResult
+						+ '</table>';
+					
+					var modal = document.getElementById("myModal");
+					
+					document.getElementById("doctor_modal_listing").innerHTML = htmlResult;
+					modal.style.display = "block";
+				break;	
+        }
+    };
+    }
+    xhr.ontimeout = function () {
+    	$("#alert_recup_donnees_carto").html("fatal_error_connect_database");
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+	
+	
+	
+	
+	
+	
+	
+}
 
 
 
