@@ -6782,6 +6782,8 @@ function detailSpComVilModal(speciality, user_id, code_commune) {
 							+ '<th>Nom</th>'
 							+ '<th>Prénom</th>'
 							+ '<th>Identifiant</th>'
+							+ '<th>Autre lieu exercice</th>'
+							+ '<th>Comptabilisé ici</th>'
 						+ '</tr>';
 					for(var i = 0; i < response.data.length; i++) {
 						htmlResult = htmlResult 
@@ -6794,6 +6796,12 @@ function detailSpComVilModal(speciality, user_id, code_commune) {
 								+ '</td>'
 								+ '<td>'
 									+ response.data[i].identifiant_pp
+								+ '</td>'
+								+ '<td>'
+									+ response.data[i].other_city
+								+ '</td>'
+								+ '<td>'
+									+ response.data[i].count_for
 								+ '</td>'
 							+ '</tr>'
 					}
