@@ -26,11 +26,16 @@
   user-select: none;
   font-size: small;
   font-weight: bold;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(255,255,255,0.6);
 }
 
 #legend:hover {
   cursor: pointer;
-  border-width: 20px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #808080;
 }
 
 
